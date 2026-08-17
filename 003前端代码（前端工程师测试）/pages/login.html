@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>登录 · Petal Ledger</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+
+    <!-- 共享样式（先于 Tailwind，确保 CSS 变量已就绪） -->
+    <link rel="stylesheet" href="../shared/css/tokens.css" />
+    <link rel="stylesheet" href="../shared/css/base.css" />
+
+    <!--
+        Tailwind 配置（内联）
+        修复：原外部 tailwind.config.js 与 CDN 加载时序不可靠，
+        多次刷新会出现颜色偏淡 / 主题类未生效的问题。
+        把 config 挂到 window.tailwind 上，CDN 初始化前一定就位。
+    -->
+    <script>
+        window.tailwind = window.tailwind || {};
+        window.tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        // Surface
+                        surface: 'var(--surface)',
+                        'surface-dim': 'var(--surface-dim)',
+                        'surface-bright': 'var(--surface-bright)',
+                        'surface-container-lowest': 'var(--surface-container-lowest)',
+                        'surface-container-low': 'var(--surface-container-low)',
+                        'surface-container': 'var(--surface-container)',
+                        'surface-container-high': 'var(--surface-container-high)',
+                        'surface-container-highest': 'var(--surface-container-highest)',
+                        'surface-variant': 'var(--surface-variant)',
+                        'surface-white': 'var(--surface-white)',
+                        'bg-soft-pink': 'var(--bg-soft-pink)',
+                        background: 'var(--background)',
+
+                        // Text
+                        'on-surface': 'var(--on-surface)',
+                        'on-surface-variant': 'var(--on-surface-variant)',
+                        'inverse-surface': 'var(--inverse-surface)',
+                        'inverse-on-surface': 'var(--inverse-on-surface)',
+                        'text-muted': 'var(--text-muted)',
+                        'text-disabled': 'var(--text-disabled)',
+                        'border-blush': 'var(--border-blush)',
+
+                        // Primary
+                        primary: 'var(--primary)',
+                        'on-primary': 'var(--on-primary)',
+                        'primary-container': 'var(--primary-container)',
+                        'on-primary-container': 'var(--on-primary-container)',
+                        'primary-fixed': 'var(--primary-fixed)',
+                        'primary-fixed-dim': 'var(--primary-fixed-dim)',
+                        'on-primary-fixed': 'var(--on-primary-fixed)',
+                        'on-primary-fixed-variant': 'var(--on-primary-fixed-variant)',
+                        'surface-tint': 'var(--surface-tint)',
+                        'inverse-primary': 'var(--inverse-primary)',
+                        'expense-red': 'var(--expense-red)',
+
+                        // Secondary
+                        secondary: 'var(--secondary)',
+                        'on-secondary': 'var(--on-secondary)',
+                        'secondary-container': 'var(--secondary-container)',
+                        'on-secondary-container': 'var(--on-secondary-container)',
+                        'secondary-fixed': 'var(--secondary-fixed)',
+                        'secondary-fixed-dim': 'var(--secondary-fixed-dim)',
+                        'on-secondary-fixed': 'var(--on-secondary-fixed)',
+                        'on-secondary-fixed-variant': 'var(--on-secondary-fixed-variant)',
+                        'income-teal': 'var(--income-teal)',
+
+                        // Tertiary
+                        tertiary: 'var(--tertiary)',
+                        'on-tertiary': 'var(--on-tertiary)',
+                        'tertiary-container': 'var(--tertiary-container)',
+                        'on-tertiary-container': 'var(--on-tertiary-container)',
+                        'tertiary-fixed': 'var(--tertiary-fixed)',
+                        'tertiary-fixed-dim': 'var(--tertiary-fixed-dim)',
+                        'on-tertiary-fixed': 'var(--on-tertiary-fixed)',
+                        'on-tertiary-fixed-variant': 'var(--on-tertiary-fixed-variant)',
+
+                        // Error
+                        error: 'var(--error)',
+                        'on-error': 'var(--on-error)',
+                        'error-container': 'var(--error-container)',
+                        'on-error-container': 'var(--on-error-container)',
+
+                        // Outline
+                        outline: 'var(--outline)',
+                        'outline-variant': 'var(--outline-variant)',
+                    },
+                    borderRadius: {
+                        DEFAULT: 'var(--radius-sm)',
+                        sm: 'var(--radius-sm)',
+                        lg: 'var(--radius-default)',
+                        xl: 'var(--radius-lg)',
+                        '2xl': 'var(--radius-xl)',
+                        '3xl': 'var(--radius-2xl)',
+                        full: 'var(--radius-full)',
+                    },
+                    spacing: {
+                        base: 'var(--spacing-base)',
+                        'container-padding': 'var(--spacing-container-padding)',
+                        'card-gap': 'var(--spacing-card-gap)',
+                        'section-margin': 'var(--spacing-section-margin)',
+                        'grid-gutter': 'var(--spacing-grid-gutter)',
+                        safe: 'var(--safe-area-bottom)',
+                    },
+                    fontFamily: {
+                        'display-amount': ['Plus Jakarta Sans', 'sans-serif'],
+                        'headline-lg': ['Plus Jakarta Sans', 'sans-serif'],
+                        'headline-md': ['Plus Jakarta Sans', 'sans-serif'],
+                        'body-lg': ['Be Vietnam Pro', 'sans-serif'],
+                        'body-sm': ['Be Vietnam Pro', 'sans-serif'],
+                        'label-caps': ['Be Vietnam Pro', 'sans-serif'],
+                        'error-text': ['Be Vietnam Pro', 'sans-serif'],
+                    },
+                    fontSize: {
+                        'display-amount': ['40px', { lineHeight: '48px', letterSpacing: '-0.02em', fontWeight: '700' }],
+                        'headline-lg': ['24px', { lineHeight: '32px', fontWeight: '700' }],
+                        'headline-md': ['20px', { lineHeight: '28px', fontWeight: '600' }],
+                        'body-lg': ['16px', { lineHeight: '24px', fontWeight: '400' }],
+                        'body-sm': ['14px', { lineHeight: '20px', fontWeight: '400' }],
+                        'label-caps': ['12px', { lineHeight: '16px', letterSpacing: '0.05em', fontWeight: '600' }],
+                        'error-text': ['12px', { lineHeight: '16px', fontWeight: '400' }],
+                    },
+                    backgroundImage: {
+                        'primary-gradient': 'linear-gradient(135deg, #FF6B9D 0%, #ffb1c5 100%)',
+                        // hover 态：把整体色调压深一档
+                        'primary-gradient-hover': 'linear-gradient(135deg, #e85a8a 0%, #FF6B9D 100%)',
+                    },
+                },
+            },
+        };
+    </script>
+
+    <!-- Tailwind CDN（在 config 之后加载，确保使用主题色） -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+</head>
+<body class="bg-bg-soft-pink min-h-screen flex flex-col font-body-lg text-on-surface antialiased overflow-x-hidden relative">
+
+    <!-- 装饰性背景 -->
+    <div class="deco-blur-pink"></div>
+    <div class="deco-blur-teal"></div>
+
+    <!-- 主内容 -->
+    <main class="flex-1 flex flex-col justify-center px-container-padding py-12 max-w-md mx-auto w-full relative z-10">
+        <!-- 标题区 -->
+        <div class="text-center mb-8 flex flex-col items-center gap-2">
+            <span class="font-headline-md text-headline-md text-primary font-bold tracking-wide">Petal Ledger</span>
+            <h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">欢迎回来</h1>
+            <p class="font-body-sm text-body-sm text-text-muted">记录每一次绽放的温暖时光</p>
+        </div>
+
+        <!-- 登录表单（圆角加大：24px → 32px） -->
+        <div class="bg-surface-white rounded-[2rem] shadow-[0_8px_32px_rgba(255,107,157,0.08)] border border-border-blush p-6 space-y-6">
+            <form id="login-form" class="space-y-card-gap" novalidate>
+
+                <!-- 用户名 -->
+                <div class="space-y-1">
+                    <label for="username" class="font-label-caps text-label-caps text-on-surface-variant block ml-1">用户名</label>
+                    <div class="relative">
+                        <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-text-muted">person</span>
+                        <input id="username" name="username" type="text" placeholder="请输入用户名"
+                               class="input-field pl-12 pr-4" required />
+                    </div>
+                </div>
+
+                <!-- 密码 -->
+                <div class="space-y-1">
+                    <label for="password" class="font-label-caps text-label-caps text-on-surface-variant block ml-1">密码</label>
+                    <div class="relative">
+                        <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-text-muted">lock</span>
+                        <input id="password" name="password" type="password" placeholder="请输入密码"
+                               class="input-field pl-12 pr-12" required />
+                        <button type="button" aria-label="切换密码显隐" data-password-toggle="password"
+                                class="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-primary transition-colors focus:outline-none">
+                            <span class="material-symbols-outlined">visibility_off</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 记住我 -->
+                <div class="flex items-center justify-between pt-2">
+                    <label class="flex items-center space-x-2 cursor-pointer group">
+                        <div class="relative flex items-center justify-center w-5 h-5">
+                            <input id="remember" type="checkbox" class="peer sr-only" />
+                            <div class="w-5 h-5 border-2 border-border-blush rounded bg-surface-white peer-checked:bg-primary peer-checked:border-primary transition-colors flex items-center justify-center">
+                                <span class="material-symbols-outlined text-surface-white text-[16px] opacity-0 peer-checked:opacity-100 transition-opacity">check</span>
+                            </div>
+                        </div>
+                        <span class="font-body-sm text-body-sm text-on-surface-variant group-hover:text-primary transition-colors">记住我（7天免登录）</span>
+                    </label>
+                </div>
+
+                <!-- 登录按钮 -->
+                <button type="submit"
+                        class="w-full primary-gradient hover:bg-primary-gradient-hover text-on-primary font-headline-md text-headline-md py-4 rounded-2xl cursor-pointer shadow-[0_4px_12px_rgba(255,107,157,0.2)] hover:shadow-[0_6px_16px_rgba(255,107,157,0.4)] hover:-translate-y-0.5 active:scale-95 active:shadow-[0_2px_8px_rgba(255,107,157,0.3)] transition-all duration-200">
+                    登 录
+                </button>
+            </form>
+
+            <!-- 错误提示 -->
+            <p id="error-msg" class="hidden text-error font-error-text text-error-text text-center"></p>
+
+            <!-- 注册跳转 -->
+            <div class="text-center">
+                <span class="font-body-sm text-body-sm text-text-muted">还没有账号？</span>
+                <a href="register.html" class="font-body-sm text-body-sm text-primary font-bold hover:text-primary-container transition-colors ml-1">立即注册</a>
+            </div>
+        </div>
+    </main>
+
+    <!-- 共享脚本 -->
+    <script src="../shared/js/auth.js"></script>
+    <script src="../shared/js/utils.js"></script>
+
+    <script>
+        // 密码显隐切换
+        document.addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-password-toggle]');
+            if (!btn) return;
+            const input = document.getElementById(btn.dataset.passwordToggle);
+            const icon = btn.querySelector('.material-symbols-outlined');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.textContent = 'visibility';
+                icon.classList.add('text-primary');
+            } else {
+                input.type = 'password';
+                icon.textContent = 'visibility_off';
+                icon.classList.remove('text-primary');
+            }
+        });
+
+        // 登录表单提交
+        const form = document.getElementById('login-form');
+        const errEl = document.getElementById('error-msg');
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const username = form.username.value.trim();
+            const password = form.password.value;
+            const rememberMe = form.remember.checked;
+
+            if (!username) {
+                errEl.textContent = '请输入用户名';
+                errEl.classList.remove('hidden');
+                return;
+            }
+            if (!password) {
+                errEl.textContent = '请输入密码';
+                errEl.classList.remove('hidden');
+                return;
+            }
+
+            // 演示阶段：任意用户名密码都通过
+            Auth.login(username, rememberMe);
+            window.location.href = 'home.html';
+        });
+    </script>
+</body>
+</html>
