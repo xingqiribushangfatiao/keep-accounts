@@ -1,0 +1,272 @@
+<!DOCTYPE html><html lang="zh-CN" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport">
+<title>Petal Ledger - 首页看板</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config from Style Guidance -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-high": "#ffe1e6",
+                        "expense-red": "#FF6B9D",
+                        "primary-container": "#ff6b9d",
+                        "tertiary": "#705d00",
+                        "secondary-container": "#91f0e6",
+                        "error-container": "#ffdad6",
+                        "primary-fixed-dim": "#ffb1c5",
+                        "on-tertiary-fixed-variant": "#554500",
+                        "on-tertiary-container": "#413500",
+                        "on-primary-container": "#6e0035",
+                        "inverse-primary": "#ffb1c5",
+                        "surface-container": "#ffe8ec",
+                        "surface-container-highest": "#ffd9e0",
+                        "surface": "#fff8f8",
+                        "tertiary-fixed-dim": "#e8c426",
+                        "secondary": "#006a63",
+                        "on-tertiary-fixed": "#221b00",
+                        "tertiary-container": "#bb9c00",
+                        "on-secondary": "#ffffff",
+                        "surface-bright": "#fff8f8",
+                        "income-teal": "#7EDDD3",
+                        "surface-white": "#FFFFFF",
+                        "on-tertiary": "#ffffff",
+                        "inverse-surface": "#432930",
+                        "surface-variant": "#ffd9e0",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed": "#ffe173",
+                        "on-surface-variant": "#574146",
+                        "on-error": "#ffffff",
+                        "inverse-on-surface": "#ffecef",
+                        "on-error-container": "#93000a",
+                        "primary": "#ac2a5d",
+                        "error": "#ba1a1a",
+                        "text-muted": "#8B6B73",
+                        "border-blush": "#FFE0E6",
+                        "primary-fixed": "#ffd9e1",
+                        "on-primary-fixed-variant": "#8c0a46",
+                        "on-primary-fixed": "#3f001b",
+                        "on-secondary-fixed": "#00201d",
+                        "background": "#fff8f8",
+                        "surface-dim": "#f9cfd8",
+                        "text-disabled": "#B8A0A5",
+                        "on-background": "#2c141b",
+                        "bg-soft-pink": "#FFF0F3",
+                        "secondary-fixed-dim": "#77d6cd",
+                        "surface-container-lowest": "#ffffff",
+                        "outline": "#8a7176",
+                        "on-secondary-fixed-variant": "#00504b",
+                        "outline-variant": "#ddbfc5",
+                        "surface-container-low": "#fff0f2",
+                        "on-secondary-container": "#006f68",
+                        "on-surface": "#2c141b",
+                        "surface-tint": "#ac2a5d",
+                        "secondary-fixed": "#94f3e9"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "base": "4px",
+                        "section-margin": "24px",
+                        "grid-gutter": "10px",
+                        "container-padding": "16px",
+                        "card-gap": "12px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Plus Jakarta Sans", "sans-serif"],
+                        "label-caps": ["Be Vietnam Pro", "sans-serif"],
+                        "headline-md": ["Plus Jakarta Sans", "sans-serif"],
+                        "body-lg": ["Be Vietnam Pro", "sans-serif"],
+                        "error-text": ["Be Vietnam Pro", "sans-serif"],
+                        "display-amount": ["Plus Jakarta Sans", "sans-serif"],
+                        "body-sm": ["Be Vietnam Pro", "sans-serif"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "error-text": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+                        "display-amount": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet">
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<style>
+        body {
+            -webkit-tap-highlight-color: transparent;
+            /* Tonal Layering Level 0 (Background) */
+            background-color: theme('colors.bg-soft-pink');
+        }
+        
+        /* Custom Scrollbar for hidden scroll effect */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+        
+        /* Level 1 Surface Card Style */
+        .surface-card {
+            background-color: theme('colors.surface-white');
+            border: 1px solid theme('colors.border-blush');
+            box-shadow: none;
+        }
+        
+        /* Level 2 Interactive Shadow */
+        .interactive-shadow {
+            box-shadow: 0 4px 12px rgba(255, 107, 157, 0.2);
+        }
+        
+        /* Primary Gradient for Buttons */
+        .primary-gradient {
+            background: linear-gradient(135deg, theme('colors.primary') 0%, theme('colors.expense-red') 100%);
+        }
+        
+        /* Smooth transition for interactions */
+        .transition-interactive {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="text-on-surface antialiased min-h-screen flex flex-col pb-[120px]">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center h-14 px-container-padding w-full z-50 bg-surface/80 backdrop-blur-md sticky top-0 docked full-width border-b border-border-blush">
+<button aria-label="Menu" class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:bg-bg-soft-pink rounded-full transition-colors active:scale-95 duration-150">
+<span class="material-symbols-outlined" style="font-variation-settings: &quot;FILL&quot; 0;">menu</span>
+</button>
+<h1 class="font-headline-md text-headline-md font-bold text-primary">Petal Ledger</h1>
+<button aria-label="Search" class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:bg-bg-soft-pink rounded-full transition-colors active:scale-95 duration-150">
+<span class="material-symbols-outlined" style="font-variation-settings: &quot;FILL&quot; 0;">search</span>
+</button>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 px-container-padding pt-4 flex flex-col gap-section-margin">
+<!-- Dashboard / Asset Overview (Bento style) -->
+<section class="grid grid-cols-2 gap-card-gap">
+<!-- Main Expense Card -->
+<div class="col-span-2 surface-card rounded-[24px] p-6 flex flex-col items-center justify-center relative overflow-hidden group">
+<div class="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+<span class="font-label-caps text-label-caps text-text-muted mb-2">本月支出 (9月)</span>
+<div class="flex items-baseline gap-1">
+<span class="font-headline-md text-headline-md text-on-surface">¥</span>
+<span class="font-display-amount text-display-amount text-on-surface">3,450.00</span>
+</div>
+</div>
+<!-- Secondary Cards -->
+<div class="surface-card rounded-[20px] p-4 flex flex-col justify-between h-28 hover:bg-surface-container-lowest transition-colors">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-expense-red/15 flex items-center justify-center text-xs">📉</div>
+<span class="font-body-sm text-body-sm text-text-muted">今日支出</span>
+</div>
+<span class="font-headline-md text-headline-md text-on-surface">¥ 125.50</span>
+</div>
+<div class="surface-card rounded-[20px] p-4 flex flex-col justify-between h-28 hover:bg-surface-container-lowest transition-colors">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-income-teal/15 flex items-center justify-center text-xs">💰</div>
+<span class="font-body-sm text-body-sm text-text-muted">本月结余</span>
+</div>
+<span class="font-headline-md text-headline-md text-on-surface">¥ 8,550.00</span>
+</div>
+</section>
+<!-- Recent Records List -->
+<section class="flex flex-col gap-4">
+<div class="flex justify-between items-center">
+<h2 class="font-headline-md text-headline-md text-on-surface">最近记录</h2>
+<button class="font-body-sm text-body-sm text-primary hover:text-expense-red transition-colors">查看全部</button>
+</div>
+<!-- Daily Group: Today -->
+<div class="flex flex-col gap-card-gap">
+<div class="flex justify-between items-center px-1">
+<span class="font-label-caps text-label-caps text-text-muted">9月24日 星期二</span>
+<span class="font-label-caps text-label-caps text-text-muted">支: ¥ 125.50</span>
+</div>
+<div class="surface-card rounded-xl p-4 flex items-center gap-4 h-[64px] active:bg-surface-container-lowest transition-colors">
+<div class="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center shrink-0"><img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDl3mPjQ1XvENra333rwp_O4IC80B0oL0TxtFaIceBiaw21zIjMqNsBUgghHZkyIn-97lpVbBVzhTwjek_abtdfX_SQvMIyEpHju_2_XcBj6QyygA1xU2vt9VkyMi7_jMGGKGdufgjY4PF-FXIKCYadvrsG_Xm00d64TO1TbNoKGyqjrtXoAMW99GPjlcEm_DIIGECk96ZeSNdMzid1DI9fIhYHNiDGqFbIEeT0qJ4V-T687FLz7MIoPA" alt="餐饮美食" class="w-full h-full object-cover"></div>
+<div class="flex-1 flex flex-col justify-center min-w-0">
+<span class="font-body-lg text-body-lg text-on-surface truncate">餐饮美食</span>
+<span class="font-body-sm text-body-sm text-text-muted truncate">午餐 外卖</span>
+</div>
+<span class="font-headline-md text-headline-md text-on-surface shrink-0">- 45.00</span>
+</div>
+<div class="surface-card rounded-xl p-4 flex items-center gap-4 h-[64px] active:bg-surface-container-lowest transition-colors">
+<div class="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center shrink-0"><img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDVQfQ1bKdRGUI0FkMnLmWcrVjEwknY9Z2VbQewJo1WZUeqUSKzQIe7Zb98w9s-U64uLTH19XPLiab5TZJ5P439H3O6rdayY9Tf9O7fPKxMPxwwef4mobiVzoNJ0_7lfGlqMjX5vkdi990BvtKro04QJa8cGTC2nzQ6cM5RbIH1pwC3S2DBw2gUiU6MUC7wPgHRAmlCc7BX6IGGQWEUyNikVXsBzMwPaol1IJMAtYdG7IwcSDp96oFrIA" alt="交通出行" class="w-full h-full object-cover"></div>
+<div class="flex-1 flex flex-col justify-center min-w-0">
+<span class="font-body-lg text-body-lg text-on-surface truncate">交通出行</span>
+<span class="font-body-sm text-body-sm text-text-muted truncate">打车回家</span>
+</div>
+<span class="font-headline-md text-headline-md text-on-surface shrink-0">- 80.50</span>
+</div>
+</div>
+<!-- Daily Group: Yesterday -->
+<div class="flex flex-col gap-card-gap mt-2">
+<div class="flex justify-between items-center px-1">
+<span class="font-label-caps text-label-caps text-text-muted">9月23日 星期一</span>
+<span class="font-label-caps text-label-caps text-text-muted">支: ¥ 320.00</span>
+</div>
+<div class="surface-card rounded-xl p-4 flex items-center gap-4 h-[64px] active:bg-surface-container-lowest transition-colors">
+<div class="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center shrink-0"><img src="https://lh3.googleusercontent.com/aida-public/AB6AXuAjqiYRzapvwMQkKWaKMgDeP93aO-MJ8OG-UDFJWM1nWg5DJVHHYgBWnX0VbDsW0Y_r3dw-AjHq5BeG1XNHSyie-fv8zNwLmTXPVPhJZhHEuvoavsEs7zS79A2qdYcl5V2-y_668xeN711KDqkuhLoMyowBwfj3al1WutrYFv1tL1IoBwQE7A_UopQelTFb7bvNsvRYfCDcQ7TFllQNfBGxB6_LSaB_Z1HpYML6x0sraaCf6M2Er0Ak4A" alt="购物" class="w-full h-full object-cover"></div>
+<div class="flex-1 flex flex-col justify-center min-w-0">
+<span class="font-body-lg text-body-lg text-on-surface truncate">购物</span>
+<span class="font-body-sm text-body-sm text-text-muted truncate">生活用品</span>
+</div>
+<span class="font-headline-md text-headline-md text-on-surface shrink-0">- 320.00</span>
+</div>
+</div>
+</section>
+<!-- Decorative spacing at bottom -->
+<div class="h-8"></div>
+</main>
+<!-- Floating Action Button (FAB) -->
+<div class="fixed bottom-[88px] right-container-padding z-40">
+<button aria-label="Add Record" class="w-14 h-14 rounded-full primary-gradient text-white flex items-center justify-center interactive-shadow transition-interactive hover:scale-105 active:scale-95">
+<span class="material-symbols-outlined text-[28px]" style="font-variation-settings: &quot;FILL&quot; 0;">add</span>
+</button>
+</div>
+<!-- BottomNavBar (Shared Component) -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center h-16 bg-surface/90 backdrop-blur-lg px-2 pb-safe z-50 rounded-t-xl" style="box-shadow: 0 -4px 12px rgba(255,107,157,0.05);">
+<!-- Active Tab: 首页 -->
+<a class="flex flex-col items-center justify-center text-primary font-bold bg-primary-container/20 rounded-xl px-4 py-1 hover:text-primary transition-interactions transform scale-90 duration-200" href="#">
+<span class="material-symbols-outlined mb-0.5" style="font-variation-settings: &quot;FILL&quot; 1;">home</span>
+<span class="font-label-caps text-[10px]">首页</span>
+</a>
+<!-- Inactive Tab: 明细 -->
+<a class="flex flex-col items-center justify-center text-text-muted px-4 py-1 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined mb-0.5" style="font-variation-settings: &quot;FILL&quot; 0;">receipt_long</span>
+<span class="font-label-caps text-[10px]">明细</span>
+</a>
+<!-- Inactive Tab: 统计 -->
+<a class="flex flex-col items-center justify-center text-text-muted px-4 py-1 hover:text-primary transition-colors" href="{{DATA:SCREEN:SCREEN_16}}">
+<span class="material-symbols-outlined mb-0.5" style="font-variation-settings: &quot;FILL&quot; 0;">leaderboard</span>
+<span class="font-label-caps text-[10px]">统计</span>
+</a>
+<!-- Inactive Tab: 设置 -->
+<a class="flex flex-col items-center justify-center text-text-muted px-4 py-1 hover:text-primary transition-colors" href="{{DATA:SCREEN:SCREEN_37}}">
+<span class="material-symbols-outlined mb-0.5" style="font-variation-settings: &quot;FILL&quot; 0;">settings</span>
+<span class="font-label-caps text-[10px]">设置</span>
+</a>
+</nav>
+
+
+
+
+</body></html>

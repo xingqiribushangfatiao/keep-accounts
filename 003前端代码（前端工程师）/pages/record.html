@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>记账 · Petal Ledger</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="../shared/css/tailwind.config.js"></script>
+    <link rel="stylesheet" href="../shared/css/tokens.css" />
+    <link rel="stylesheet" href="../shared/css/base.css" />
+    <style>
+        .keypad-btn {
+            transition: background-color 0.1s ease;
+        }
+        .keypad-btn:active {
+            background-color: #ffd9e0;
+        }
+    </style>
+</head>
+<body class="bg-bg-soft-pink text-on-surface font-body-lg h-screen flex flex-col overflow-hidden">
+
+    <!-- 顶部应用栏 -->
+    <header class="flex justify-between items-center h-14 px-container-padding w-full z-50 bg-surface/80 backdrop-blur-md border-b border-border-blush flex-shrink-0">
+        <!-- 关闭按钮：返回首页 -->
+        <a href="home.html" aria-label="关闭" class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:bg-bg-soft-pink rounded-full active:scale-95">
+            <span class="material-symbols-outlined">close</span>
+        </a>
+
+        <!-- 支出/收入切换 -->
+        <div class="flex bg-surface-container-high rounded-full p-1 relative w-48 shadow-inner">
+            <div class="absolute h-[calc(100%-8px)] w-[calc(50%-4px)] bg-surface-white rounded-full shadow-sm transition-transform duration-300 ease-in-out left-1 top-1" id="segment-highlighter"></div>
+            <button id="btn-expense" class="flex-1 relative z-10 py-1.5 text-center font-label-caps text-label-caps text-expense-red font-bold transition-colors">支出</button>
+            <button id="btn-income" class="flex-1 relative z-10 py-1.5 text-center font-label-caps text-label-caps text-text-muted transition-colors">收入</button>
+        </div>
+
+        <div class="w-10 h-10"></div>
+    </header>
+
+    <!-- 主内容 -->
+    <main class="flex-1 flex flex-col overflow-hidden">
+        <!-- 金额输入区 -->
+        <div class="px-container-padding py-6 flex flex-col items-end border-b border-border-blush bg-surface-white shrink-0">
+            <div class="flex items-center gap-2 w-full">
+                <span id="category-icon-display" class="text-3xl"></span>
+                <span id="category-name-display" class="font-body-sm text-body-sm text-text-muted"></span>
+            </div>
+            <div class="flex items-baseline w-full justify-end mt-2 overflow-hidden">
+                <span class="font-headline-md text-headline-md text-on-surface mr-1">¥</span>
+                <span id="amount-display" class="font-display-amount text-display-amount text-on-surface font-bold truncate">0.00</span>
+            </div>
+            <!-- 备注 -->
+            <div class="w-full mt-4 flex items-center gap-2 border-t border-border-blush pt-3">
+                <span class="material-symbols-outlined text-text-muted text-sm">edit_note</span>
+                <input id="note-input" type="text" placeholder="添加备注..." class="flex-1 bg-transparent border-none focus:ring-0 text-body-sm text-text-muted placeholder:text-text-disabled p-0 h-6 outline-none" />
+            </div>
+        </div>
+
+        <!-- 分类网格 -->
+        <div id="category-grid" class="flex-1 overflow-y-auto bg-bg-soft-pink p-container-padding pb-4">
+            <!-- JS 动态渲染分类 -->
+        </div>
+
+        <!-- 数字键盘 -->
+        <div class="bg-surface-white border-t border-border-blush pb-safe shrink-0">
+            <div class="flex items-center justify-between px-4 py-2 border-b border-border-blush/50">
+                <button id="date-btn" class="flex items-center gap-1 text-sm text-text-muted bg-surface-container-low px-3 py-1 rounded-full">
+                    <span class="material-symbols-outlined text-[16px]">calendar_today</span>
+                    <span id="date-label">今天</span>
+                </button>
+            </div>
+            <div class="grid grid-cols-4 grid-rows-4 h-64">
+                <button class="keypad-btn font-headline-md text-headline-md text-on-surface border-r border-b border-border-blush/30" data-num="1">1</button>
+                <button class="keypad-btn font-headline-md text-headline-md text-on-surface border-r border-b border-border-blush/30" data-num="2">2</button>
+                <button class="keypad-btn font-headline-md text-headline-md text-on-surface border-r border-b border-border-blush/30" data-num="3">3</button>
+                <button id="btn-backspace" class="keypad-btn flex items-center justify-center text-text-muted border-b border-border-blush/30">
+                    <span class="material-symbols-outlined">backspace</span>
+                </button>
+                <button class="keypad-btn font-headline-md text-headline-md text-on-surface border-r border-b border-border-blush/30" data-num="4">4</button>
+                <button class="keypad-btn font-headline-md text-headline-md text-on-surface border-r border-b border-border-blush/30" data-num="5">5</button>
+                <button class="keypad-btn font-headline-md text-headline-md text-on-surface border-r border-b border-border-blush/30" data-num="6">6</button>
+                <button id="btn-clear" class="keypad-btn font-body-lg text-body-lg text-text-muted border-b border-border-blush/30">C</button>
+                <button class="keypad-btn font-headline-md text-headline-md text-on-surface border-r border-b border-border-blush/30" data-num="7">7</button>
+                <button class="keypad-btn font-headline-md text-headline-md text-on-surface border-r border-b border-border-blush/30" data-num="8">8</button>
+                <button class="keypad-btn font-headline-md text-headline-md text-on-surface border-r border-b border-border-blush/30" data-num="9">9</button>
+                <button id="btn-save" class="bg-primary text-on-primary font-headline-md text-headline-md row-span-2 shadow-[0_4px_12px_rgba(255,107,157,0.2)] active:bg-primary/90 transition-colors">保存</button>
+                <button class="keypad-btn font-headline-md text-headline-md text-on-surface border-r border-border-blush/30 col-span-2" data-num="0">0</button>
+                <button class="keypad-btn font-headline-md text-headline-md text-on-surface border-r border-border-blush/30" data-num=".">.</button>
+            </div>
+        </div>
+    </main>
+
+    <script src="../shared/js/auth.js"></script>
+    <script src="../shared/js/utils.js"></script>
+    <script src="../shared/js/data.js"></script>
+
+    <script>
+        if (!Auth.requireAuth()) {} else { init(); }
+
+        function init() {
+            /* ========== 状态 ========== */
+            let isExpense = true;
+            let selectedCategory = null;
+            let inputString = '';
+            let recordDate = Utils.today();
+
+            const amountDisplay = document.getElementById('amount-display');
+            const iconDisplay = document.getElementById('category-icon-display');
+            const nameDisplay = document.getElementById('category-name-display');
+            const dateLabel = document.getElementById('date-label');
+
+            /* ========== 渲染分类网格 ========== */
+            const renderCategories = () => {
+                const list = isExpense ? MockData.expenseCategories : MockData.incomeCategories;
+                const grid = document.getElementById('category-grid');
+                grid.innerHTML = `
+                    <div class="grid grid-cols-4 gap-y-6 gap-x-2">
+                        ${list.slice(0, 8).map((c) => `
+                            <button data-cat="${c.id}" class="cat-btn flex flex-col items-center gap-2 group">
+                                <div class="w-12 h-12 rounded-full flex items-center justify-center text-2xl border-2 border-transparent transition-transform active:scale-95"
+                                     style="background-color: ${c.color}20">${c.emoji}</div>
+                                <span class="font-label-caps text-label-caps text-text-muted">${c.name}</span>
+                            </button>
+                        `).join('')}
+                    </div>`;
+                // 绑定点击事件
+                grid.querySelectorAll('.cat-btn').forEach((btn) => {
+                    btn.addEventListener('click', () => selectCategory(btn.dataset.cat));
+                });
+            };
+
+            const selectCategory = (id) => {
+                const cat = MockData.getCategoryById(id);
+                if (!cat) return;
+                selectedCategory = cat;
+                iconDisplay.textContent = cat.emoji;
+                nameDisplay.textContent = cat.name;
+                // 边框高亮
+                document.querySelectorAll('.cat-btn > div').forEach((el) => {
+                    el.classList.remove('border-2');
+                    el.style.borderColor = 'transparent';
+                });
+                const active = document.querySelector(`[data-cat="${id}"] > div`);
+                if (active) {
+                    active.classList.add('border-2');
+                    active.style.borderColor = cat.color;
+                }
+            };
+
+            /* ========== 支出/收入切换 ========== */
+            const highlighter = document.getElementById('segment-highlighter');
+            const btnExpense = document.getElementById('btn-expense');
+            const btnIncome = document.getElementById('btn-income');
+
+            const switchType = (toExpense) => {
+                if (toExpense === isExpense) return;
+                isExpense = toExpense;
+                highlighter.style.transform = toExpense ? 'translateX(0)' : 'translateX(100%)';
+                if (toExpense) {
+                    btnExpense.classList.add('text-expense-red', 'font-bold');
+                    btnExpense.classList.remove('text-text-muted');
+                    btnIncome.classList.remove('text-income-teal', 'font-bold');
+                    btnIncome.classList.add('text-text-muted');
+                } else {
+                    btnIncome.classList.add('text-income-teal', 'font-bold');
+                    btnIncome.classList.remove('text-text-muted');
+                    btnExpense.classList.remove('text-expense-red', 'font-bold');
+                    btnExpense.classList.add('text-text-muted');
+                }
+                selectedCategory = null;
+                iconDisplay.textContent = '';
+                nameDisplay.textContent = '';
+                renderCategories();
+            };
+            btnExpense.addEventListener('click', () => switchType(true));
+            btnIncome.addEventListener('click', () => switchType(false));
+
+            /* ========== 数字键盘 ========== */
+            const updateDisplay = () => {
+                amountDisplay.textContent = inputString || '0.00';
+            };
+
+            const appendNumber = (n) => {
+                if (inputString === '0' && n !== '.') inputString = n;
+                else if (n === '.' && inputString.includes('.')) return;
+                else if (inputString.includes('.') && inputString.split('.')[1].length >= 2) return;
+                else inputString += n;
+                updateDisplay();
+            };
+
+            document.querySelectorAll('[data-num]').forEach((btn) => {
+                btn.addEventListener('click', () => appendNumber(btn.dataset.num));
+            });
+            document.getElementById('btn-backspace').addEventListener('click', () => {
+                inputString = inputString.slice(0, -1);
+                updateDisplay();
+            });
+            document.getElementById('btn-clear').addEventListener('click', () => {
+                inputString = '';
+                updateDisplay();
+            });
+
+            /* ========== 日期切换 ========== */
+            document.getElementById('date-btn').addEventListener('click', () => {
+                const days = ['今天', '昨天', '前天'];
+                const cur = dateLabel.textContent;
+                const idx = days.indexOf(cur);
+                const next = days[(idx + 1) % days.length];
+                dateLabel.textContent = next;
+                const d = new Date();
+                d.setDate(d.getDate() - idx);
+                recordDate = d.toISOString().slice(0, 10);
+            });
+
+            /* ========== 保存 ========== */
+            document.getElementById('btn-save').addEventListener('click', () => {
+                if (!selectedCategory) {
+                    alert('请选择一个分类');
+                    return;
+                }
+                if (!inputString || parseFloat(inputString) === 0) {
+                    alert('请输入金额');
+                    return;
+                }
+                const note = document.getElementById('note-input').value.trim();
+                const record = {
+                    id: 't_' + Date.now(),
+                    type: isExpense ? 'expense' : 'income',
+                    amount: parseFloat(inputString),
+                    categoryId: selectedCategory.id,
+                    date: recordDate,
+                    note,
+                    createdAt: Date.now(),
+                };
+                // 演示：保存到内存（生产环境应写入 IndexedDB）
+                MockData.transactions.unshift(record);
+                alert('保存成功！');
+                window.location.href = 'home.html';
+            });
+
+            // 初始化
+            renderCategories();
+        }
+    </script>
+</body>
+</html>

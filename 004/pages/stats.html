@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>统计 · Petal Ledger</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+
+    <link rel="stylesheet" href="../shared/css/tokens.css" />
+    <link rel="stylesheet" href="../shared/css/base.css" />
+
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        surface: 'var(--surface)',
+                        'surface-white': 'var(--surface-white)',
+                        'bg-soft-pink': 'var(--bg-soft-pink)',
+                        primary: 'var(--primary)',
+                        'primary-container': 'var(--primary-container)',
+                        'on-primary': 'var(--on-primary)',
+                        'on-surface': 'var(--on-surface)',
+                        'text-muted': 'var(--text-muted)',
+                        'text-disabled': 'var(--text-disabled)',
+                        'border-blush': 'var(--border-blush)',
+                        'expense-red': 'var(--expense-red)',
+                        'income-teal': 'var(--income-teal)',
+                    },
+                    borderRadius: { full: 'var(--radius-full)', xl: 'var(--radius-xl)', '2xl': 'var(--radius-2xl)' },
+                    fontFamily: { body: ['Be Vietnam Pro', 'sans-serif'], display: ['Plus Jakarta Sans', 'sans-serif'] },
+                    backgroundImage: { 'primary-gradient': 'linear-gradient(135deg, #FF6B9D 0%, #FFB1C5 100%)' },
+                },
+            },
+        };
+    </script>
+    <style>
+        .range-tab {
+            padding: 6px 18px;
+            border-radius: var(--radius-full);
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+            transition: all 0.2s;
+        }
+        .range-tab.active {
+            background: var(--primary-gradient);
+            color: white;
+            box-shadow: 0 2px 8px rgba(255,107,157,0.25);
+        }
+        .progress-bar {
+            height: 6px;
+            background: var(--surface-container);
+            border-radius: var(--radius-full);
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            border-radius: var(--radius-full);
+            transition: width 0.6s ease;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-on-surface font-body pb-24" style="background: #FFF0F3;">
+
+    <main class="mx-auto pb-8 w-full max-w-[390px]" style="min-height: 844px;">
+
+        <!-- 标题 -->
+        <header class="px-5 pt-6 pb-4">
+            <h1 class="font-display text-[20px] font-bold text-center">统计图表</h1>
+        </header>
+
+        <!-- 时间范围切换器 -->
+        <div class="px-5 mb-5 flex justify-center">
+            <div class="flex items-center gap-1 p-1 bg-surface-white rounded-full border border-border-blush">
+                <button class="range-tab" data-range="week">本周</button>
+                <button class="range-tab active" data-range="month">本月</button>
+                <button class="range-tab" data-range="year">本年</button>
+            </div>
+        </div>
+
+        <!-- 总支出 / 总收入 双卡（白色，无渐变） -->
+        <section class="px-5 mb-5">
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-surface-white rounded-2xl p-4 border border-border-blush">
+                    <p class="text-[13px] text-text-muted mb-2">总支出</p>
+                    <p class="font-display text-[20px] font-extrabold text-primary" id="total-expense">¥3,280.50</p>
+                </div>
+                <div class="bg-surface-white rounded-2xl p-4 border border-border-blush">
+                    <p class="text-[13px] text-text-muted mb-2">总收入</p>
+                    <p class="font-display text-[20px] font-extrabold text-income-teal" id="total-income">¥8,500.00</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 支出构成分析 环形图 -->
+        <section class="px-5">
+            <div class="bg-surface-white rounded-2xl p-5 border border-border-blush mb-6">
+                <h3 class="font-display text-[15px] font-bold text-on-surface mb-5">支出构成分析</h3>
+
+                <!-- 环形图（居中大尺寸） -->
+                <div class="relative w-[200px] h-[200px] mx-auto mb-5">
+                    <svg viewBox="0 0 100 100" class="w-full h-full -rotate-90">
+                        <circle cx="50" cy="50" r="40" fill="none" stroke="var(--surface-container)" stroke-width="16" />
+                        <g id="donut-segments"></g>
+                    </svg>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center">
+                        <p class="text-[12px] text-text-muted">支出比</p>
+                        <p class="font-display text-[28px] font-extrabold text-on-surface leading-none mt-1">100%</p>
+                    </div>
+                </div>
+
+                <!-- 图例（环形图下方） -->
+                <div class="flex flex-wrap justify-center gap-x-4 gap-y-2" id="donut-legend"></div>
+            </div>
+        </section>
+
+        <!-- 分类排行 -->
+        <section class="px-5">
+            <h3 class="font-display text-[15px] font-bold text-on-surface mb-3">分类排行</h3>
+            <div class="space-y-3" id="category-rank"></div>
+        </section>
+    </main>
+
+    <!-- 底部导航（中间包含 [+] 记一笔按钮）-->
+    <div id="bottom-nav" data-active="stats"></div>
+
+    <script src="../shared/js/auth.js"></script>
+    <script src="../shared/js/utils.js"></script>
+    <script src="../shared/js/data.js"></script>
+    <script src="../shared/js/nav.js"></script>
+
+    <script>
+        // ========== 数据声明（必须在 init() 之前）==========
+        // 与设计图一致的颜色顺序
+        const COLORS = {
+            food:      '#FF6B9D',  // 餐饮 - 粉
+            transport: '#4ECDC4',  // 交通 - 青
+            shopping:  '#FECA57',  // 购物 - 黄
+            housing:   '#FFB1C5',  // 住房 - 浅粉
+            fun:       '#E83E8C',  // 娱乐 - 深粉
+            other_exp: '#8395A7',  // 其他 - 灰
+        };
+
+        // 不同时间范围的总收支数据
+        const rangeData = {
+            week:  { expense: 846.50,   income: 0,        balance: -846.50 },
+            month: { expense: 3280.50,  income: 8500.00,  balance: 5219.50 },
+            year:  { expense: 28900.00, income: 76500.00, balance: 47600.00 },
+        };
+
+        if (!Auth.requireAuth()) {} else { init(); }
+
+        function init() {
+            renderRange('month');
+            renderDonut();
+            renderRank();
+            bindRangeTabs();
+            BottomNav.init();
+        }
+
+        function renderRange(key) {
+            const d = rangeData[key];
+            document.getElementById('total-expense').textContent = Utils.formatCurrency(d.expense);
+            document.getElementById('total-income').textContent  = Utils.formatCurrency(d.income);
+        }
+
+        function bindRangeTabs() {
+            document.querySelectorAll('.range-tab').forEach((tab) => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.range-tab').forEach((t) => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    renderRange(tab.dataset.range);
+                });
+            });
+        }
+
+        function renderDonut() {
+            const data = MockData.categoryStats;
+            const radius = 40, circumference = 2 * Math.PI * radius;
+            let offset = 0;
+
+            const segs = data.map((item) => {
+                const frac = item.percent / 100;
+                const len = frac * circumference;
+                const color = COLORS[item.categoryId] || '#FF6B9D';
+                const el = `<circle cx="50" cy="50" r="${radius}" fill="none"
+                                stroke="${color}"
+                                stroke-width="16"
+                                stroke-dasharray="${len} ${circumference}"
+                                stroke-dashoffset="${-offset}" />`;
+                offset += len;
+                return el;
+            }).join('');
+
+            document.getElementById('donut-segments').innerHTML = segs;
+
+            // 图例在环形图下方
+            const legend = document.getElementById('donut-legend');
+            legend.innerHTML = data.slice(0, 5).map((item) => {
+                const cat = MockData.getCategoryById(item.categoryId);
+                const color = COLORS[item.categoryId] || '#FF6B9D';
+                return `
+                <div class="flex items-center gap-1.5 text-[12px]">
+                    <span class="w-2 h-2 rounded-full shrink-0" style="background-color: ${color};"></span>
+                    <span class="text-on-surface">${cat.name}</span>
+                    <span class="text-text-muted font-medium">${item.percent}%</span>
+                </div>`;
+            }).join('');
+        }
+
+        function renderRank() {
+            // 分类排行按金额降序：餐饮 > 购物 > 交通 > 住房 > 其他 > 娱乐
+            const data = [...MockData.categoryStats].sort((a, b) => b.amount - a.amount);
+            const host = document.getElementById('category-rank');
+            host.innerHTML = data.map((item) => {
+                const cat = MockData.getCategoryById(item.categoryId);
+                const color = COLORS[item.categoryId] || '#FF6B9D';
+                return `
+                <div class="bg-surface-white rounded-2xl p-3.5 border border-border-blush">
+                    <div class="flex items-center gap-3 mb-2.5">
+                        <div class="w-9 h-9 rounded-full flex items-center justify-center text-lg shrink-0" style="background-color: ${color}22;">${cat.emoji}</div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-[14px] font-semibold text-on-surface">${cat.name}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-display text-[15px] font-bold text-on-surface leading-tight">${Utils.formatCurrency(item.amount)}</p>
+                            <p class="text-[11px] text-text-muted mt-0.5">${item.percent}%</p>
+                        </div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${item.percent}%; background-color: ${color};"></div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+    </script>
+</body>
+</html>

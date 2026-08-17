@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>首页 · Petal Ledger</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="../shared/css/tailwind.config.js"></script>
+    <link rel="stylesheet" href="../shared/css/tokens.css" />
+    <link rel="stylesheet" href="../shared/css/base.css" />
+</head>
+<body class="text-on-surface antialiased min-h-screen flex flex-col pb-[120px]">
+
+    <!-- 顶部应用栏 -->
+    <header class="flex justify-between items-center h-14 px-container-padding w-full z-50 bg-surface/80 backdrop-blur-md sticky top-0 border-b border-border-blush">
+        <button aria-label="菜单" class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:bg-bg-soft-pink rounded-full transition-colors active:scale-95">
+            <span class="material-symbols-outlined">menu</span>
+        </button>
+        <h1 class="font-headline-md text-headline-md font-bold text-primary">Petal Ledger</h1>
+        <button aria-label="搜索" class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:bg-bg-soft-pink rounded-full transition-colors active:scale-95">
+            <span class="material-symbols-outlined">search</span>
+        </button>
+    </header>
+
+    <!-- 主内容 -->
+    <main class="flex-1 px-container-padding pt-4 flex flex-col gap-section-margin">
+        <!-- 看板：资产概览 -->
+        <section class="grid grid-cols-2 gap-card-gap">
+            <!-- 主支出卡 -->
+            <div class="col-span-2 surface-card rounded-[24px] p-6 flex flex-col items-center justify-center relative overflow-hidden group">
+                <div class="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <span class="font-label-caps text-label-caps text-text-muted mb-2">本月支出（<span id="current-month">9月</span>）</span>
+                <div class="flex items-baseline gap-1">
+                    <span class="font-headline-md text-headline-md text-on-surface">¥</span>
+                    <span id="month-expense" class="font-display-amount text-display-amount text-on-surface">0.00</span>
+                </div>
+            </div>
+            <!-- 次卡：今日支出 -->
+            <div class="surface-card rounded-[20px] p-4 flex flex-col justify-between h-28 hover:bg-surface-container-lowest transition-colors">
+                <div class="flex items-center gap-2">
+                    <div class="w-6 h-6 rounded-full bg-expense-red/15 flex items-center justify-center text-xs">📉</div>
+                    <span class="font-body-sm text-body-sm text-text-muted">今日支出</span>
+                </div>
+                <span id="today-expense" class="font-headline-md text-headline-md text-on-surface">¥ 0.00</span>
+            </div>
+            <!-- 次卡：本月结余 -->
+            <div class="surface-card rounded-[20px] p-4 flex flex-col justify-between h-28 hover:bg-surface-container-lowest transition-colors">
+                <div class="flex items-center gap-2">
+                    <div class="w-6 h-6 rounded-full bg-income-teal/15 flex items-center justify-center text-xs">💰</div>
+                    <span class="font-body-sm text-body-sm text-text-muted">本月结余</span>
+                </div>
+                <span id="month-balance" class="font-headline-md text-headline-md text-on-surface">¥ 0.00</span>
+            </div>
+        </section>
+
+        <!-- 最近记录 -->
+        <section class="flex flex-col gap-4">
+            <div class="flex justify-between items-center">
+                <h2 class="font-headline-md text-headline-md text-on-surface">最近记录</h2>
+                <a href="list.html" class="font-body-sm text-body-sm text-primary hover:text-expense-red transition-colors">查看全部 ›</a>
+            </div>
+            <div id="recent-records" class="flex flex-col gap-card-gap">
+                <!-- JS 动态渲染 -->
+            </div>
+        </section>
+    </main>
+
+    <!-- FAB：快速记账 -->
+    <a href="record.html" aria-label="新增记录"
+       class="fixed bottom-[88px] right-container-padding z-40 w-14 h-14 rounded-full primary-gradient text-white flex items-center justify-center interactive-shadow transition-interactive hover:scale-105 active:scale-95">
+        <span class="material-symbols-outlined text-[28px]">add</span>
+    </a>
+
+    <!-- 底部导航 -->
+    <div id="bottom-nav" data-active="home"></div>
+
+    <!-- 共享脚本 -->
+    <script src="../shared/js/auth.js"></script>
+    <script src="../shared/js/utils.js"></script>
+    <script src="../shared/js/data.js"></script>
+    <script src="../shared/js/nav.js"></script>
+
+    <script>
+        // 路由守卫
+        if (!Auth.requireAuth()) {
+            // 未登录，Auth.requireAuth 已跳转
+        } else {
+            init();
+        }
+
+        function init() {
+            // 渲染数据
+            const s = MockData.summary;
+            document.getElementById('current-month').textContent = (new Date().getMonth() + 1) + '月';
+            document.getElementById('month-expense').textContent = Utils.formatCurrency(s.monthExpense, false);
+            document.getElementById('today-expense').textContent = Utils.formatCurrency(s.todayExpense);
+            document.getElementById('month-balance').textContent = Utils.formatCurrency(s.monthBalance);
+
+            // 渲染最近记录（取最近 5 条）
+            const records = MockData.transactions.slice(0, 5);
+            const container = document.getElementById('recent-records');
+            container.innerHTML = records.map((r) => {
+                const cat = MockData.getCategoryById(r.categoryId);
+                const sign = r.type === 'expense' ? '-' : '+';
+                const amountColor = r.type === 'expense' ? 'text-on-surface' : 'text-income-teal';
+                return `
+        <a href="list.html" class="surface-card rounded-xl p-4 flex items-center gap-4 h-[64px] active:bg-surface-container-lowest transition-colors">
+            <div class="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center shrink-0 text-2xl"
+                 style="background-color: ${cat.color}20">${cat.emoji}</div>
+            <div class="flex-1 flex flex-col justify-center min-w-0">
+                <span class="font-body-lg text-body-lg text-on-surface truncate">${cat.name}</span>
+                <span class="font-body-sm text-body-sm text-text-muted truncate">${Utils.escapeHtml(r.note || '')}</span>
+            </div>
+            <span class="font-headline-md text-headline-md ${amountColor} shrink-0">${sign} ${Utils.formatCurrency(r.amount, false)}</span>
+        </a>`;
+            }).join('');
+
+            // 渲染底部导航
+            BottomNav.init();
+        }
+    </script>
+</body>
+</html>
