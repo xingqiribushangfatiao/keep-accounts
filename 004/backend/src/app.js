@@ -9,6 +9,7 @@ const express = require('express');
 const cors    = require('cors');
 
 const authRouter    = require('./routes/auth');
+const booksRouter   = require('./routes/books');
 const { testConnection } = require('./config/db');
 
 const app = express();
@@ -46,12 +47,13 @@ app.get('/api/health', async (_req, res) => {
 });
 
 /* ============================ 业务路由 ============================ */
-app.use('/api/auth', authRouter);
+app.use('/api/auth',  authRouter);
+app.use('/api/books', booksRouter);
 
-// 后续业务路由挂载点
-// app.use('/api/books', requireAuth, booksRouter);
-// app.use('/api/categories', requireAuth, categoriesRouter);
+// 后续业务路由(本轮不实现,前端先用 mock 兜底)
+// app.use('/api/categories',   requireAuth, categoriesRouter);
 // app.use('/api/transactions', requireAuth, transactionsRouter);
+// app.use('/api/stats',        requireAuth, statsRouter);
 
 /* ============================ 404 处理 ============================ */
 app.use((req, res) => {
