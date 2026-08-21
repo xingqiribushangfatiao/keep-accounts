@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>首页 · Petal Ledger</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+
+    <link rel="stylesheet" href="../shared/css/tokens.css" />
+    <link rel="stylesheet" href="../shared/css/base.css" />
+
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        surface: 'var(--surface)',
+                        'surface-white': 'var(--surface-white)',
+                        'bg-soft-pink': 'var(--bg-soft-pink)',
+                        primary: 'var(--primary)',
+                        'primary-container': 'var(--primary-container)',
+                        'on-primary': 'var(--on-primary)',
+                        'on-surface': 'var(--on-surface)',
+                        'text-muted': 'var(--text-muted)',
+                        'text-disabled': 'var(--text-disabled)',
+                        'border-blush': 'var(--border-blush)',
+                        'expense-red': 'var(--expense-red)',
+                        'income-teal': 'var(--income-teal)',
+                    },
+                    borderRadius: { full: 'var(--radius-full)', xl: 'var(--radius-xl)', '2xl': 'var(--radius-2xl)' },
+                    fontFamily: { body: ['Be Vietnam Pro', 'sans-serif'], display: ['Plus Jakarta Sans', 'sans-serif'] },
+                    backgroundImage: { 'primary-gradient': 'var(--primary-gradient)' },
+                },
+            },
+        };
+    </script>
+</head>
+<body class="bg-bg-soft-pink min-h-screen text-on-surface font-body pb-24">
+
+    <main class="max-w-md mx-auto px-5 pt-6 pb-8">
+
+        <!-- 顶部问候区 -->
+        <header class="flex items-center justify-between mb-5">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-full bg-gradient-to-br from-primary-container to-primary flex items-center justify-center text-2xl" style="box-shadow: 0 4px 12px color-mix(in srgb, var(--primary) 25%, transparent);">
+                    ✨
+                </div>
+                <div>
+                    <h1 class="text-[17px] font-bold text-on-surface leading-tight" id="greeting">你好，<span id="username">zhangsan</span></h1>
+                    <p class="text-[12px] text-text-muted mt-0.5">今天也要好好记账哦~</p>
+                </div>
+            </div>
+            <span class="px-3.5 py-1.5 rounded-full bg-surface-white text-[12px] text-text-muted font-medium border border-border-blush" id="today-date">8月16日</span>
+        </header>
+
+        <!-- 本月支出 渐变 Hero 卡 -->
+        <section class="rounded-3xl p-5 mb-4 text-white relative overflow-hidden" style="background: var(--primary-gradient-strong); box-shadow: 0 8px 24px color-mix(in srgb, var(--primary) 30%, transparent);">
+            <!-- 装饰圆 -->
+            <div class="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-white/10 pointer-events-none"></div>
+            <div class="absolute right-12 bottom-0 w-20 h-20 rounded-full bg-white/5 pointer-events-none"></div>
+
+            <p class="text-[13px] text-white/80 mb-2 font-medium">本月支出</p>
+            <h2 class="font-display text-[34px] font-extrabold leading-none tracking-tight mb-5" id="month-expense">¥ 3,280.50</h2>
+
+            <div class="flex justify-between items-end pt-4 border-t border-white/20">
+                <div>
+                    <p class="text-[11px] text-white/70 mb-1">本月收入</p>
+                    <p class="font-display text-[18px] font-bold" id="month-income">¥ 8,500.00</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-[11px] text-white/70 mb-1">本月结余</p>
+                    <p class="font-display text-[18px] font-bold" id="month-balance">¥ 5,219.50</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 今日支出 + 预算结余 双卡 -->
+        <section class="grid grid-cols-2 gap-3 mb-6">
+            <div class="bg-surface-white rounded-2xl p-4 border border-border-blush flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-[#FFEDF1] flex items-center justify-center text-lg shrink-0">📅</div>
+                <div class="min-w-0">
+                    <p class="text-[12px] text-text-muted">今日支出</p>
+                    <p class="font-display text-[16px] font-bold text-expense-red leading-tight" id="today-expense">¥ 86.00</p>
+                </div>
+                <span class="ml-auto text-[12px] text-text-muted" id="today-count">17 笔</span>
+            </div>
+            <div class="bg-surface-white rounded-2xl p-4 border border-border-blush flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-[#FFF6D6] flex items-center justify-center text-lg shrink-0">💡</div>
+                <div class="min-w-0">
+                    <p class="text-[12px] text-text-muted">预算结余</p>
+                    <p class="font-display text-[16px] font-bold text-income-teal leading-tight" id="budget-remain">¥ 1,719.50</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 最近记录 -->
+        <section>
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="font-display text-[18px] font-bold text-on-surface">最近记录</h2>
+                <a href="list.html" class="text-[12px] text-text-muted flex items-center gap-0.5">查看全部 <span class="material-symbols-outlined text-[14px]">chevron_right</span></a>
+            </div>
+
+            <div class="space-y-2.5" id="recent-list">
+                <!-- JS 动态渲染 -->
+            </div>
+        </section>
+    </main>
+
+    <!-- 底部导航（中间包含 [+] 记一笔按钮）-->
+    <div id="bottom-nav" data-active="home"></div>
+
+    <script src="../shared/js/auth.js"></script>
+    <script src="../shared/js/utils.js"></script>
+    <script src="../shared/js/data.js"></script>
+    <script src="../shared/js/nav.js"></script>
+
+    <script>
+        if (!Auth.requireAuth()) {} else { init(); }
+
+        async function init() {
+            try {
+                await MockData.init();
+            } catch (err) {
+                console.error('[home] 数据加载失败:', err);
+            }
+
+            // 用户名 & 今日日期
+            const session = Auth.getSession();
+            document.getElementById('username').textContent = session ? session.username : '用户';
+
+            const now = new Date();
+            document.getElementById('today-date').textContent = `${now.getMonth() + 1}月${now.getDate()}日`;
+
+            // 汇总数据(从后端拉的 summary)
+            const s = MockData.summary;
+            document.getElementById('month-expense').textContent  = Utils.formatCurrency(s.monthExpense);
+            document.getElementById('month-income').textContent   = Utils.formatCurrency(s.monthIncome);
+            document.getElementById('month-balance').textContent  = Utils.formatCurrency(s.monthBalance);
+            document.getElementById('budget-remain').textContent  = Utils.formatCurrency(s.budgetRemain);
+
+            // 今日支出 + 笔数
+            const todayStr = Utils.today();
+            const todayTxs = MockData.transactions.filter((t) => t.date === todayStr);
+            const todayTotal = todayTxs
+                .filter((t) => t.type === 'expense')
+                .reduce((sum, t) => sum + t.amount, 0);
+            document.getElementById('today-expense').textContent = Utils.formatCurrency(todayTotal);
+            document.getElementById('today-count').textContent   = `${todayTxs.length} 笔`;
+
+            // 最近 4 条记录
+            const recents = MockData.transactions.slice(0, 4);
+            const host = document.getElementById('recent-list');
+            if (!recents.length) {
+                host.innerHTML = `
+                <div class="bg-surface-white rounded-2xl p-6 text-center text-text-muted text-[13px] border border-border-blush">
+                    还没有记录,去<span class="text-primary font-semibold mx-0.5">[+]</span>记一笔吧 ✨
+                </div>`;
+            } else {
+                host.innerHTML = recents.map((r) => {
+                    const cat = MockData.getCategoryById(r.categoryId) || { name: '其他', emoji: '📦', color: '#8395A7' };
+                    const isIncome = r.type === 'income';
+                    const sign = isIncome ? '+' : '-';
+                    const amountColor = isIncome ? 'text-income-teal' : 'text-expense-red';
+                    const timeStr = Utils.relativeDate(r.date) + ' ' + Utils.formatTime(r.createdAt);
+                    return `
+                    <div class="bg-surface-white rounded-2xl p-3.5 flex items-center gap-3 border border-border-blush">
+                        <div class="w-11 h-11 rounded-full flex items-center justify-center text-2xl shrink-0" style="background-color: ${cat.color}22;">${cat.emoji}</div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-[14px] font-semibold text-on-surface leading-tight">${cat.name}</p>
+                            <p class="text-[12px] text-text-muted mt-0.5 truncate">${Utils.escapeHtml(r.note) || '无备注'}</p>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <p class="font-display text-[15px] font-bold ${amountColor}">${sign}${Utils.formatCurrency(r.amount, false)}</p>
+                            <p class="text-[11px] text-text-muted mt-0.5">${timeStr}</p>
+                        </div>
+                    </div>`;
+                }).join('');
+            }
+
+            BottomNav.init();
+        }
+    </script>
+</body>
+</html>

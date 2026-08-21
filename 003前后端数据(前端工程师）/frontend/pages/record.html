@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>记一笔 · Petal Ledger</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+
+    <link rel="stylesheet" href="../shared/css/tokens.css" />
+    <link rel="stylesheet" href="../shared/css/base.css" />
+
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        surface: 'var(--surface)',
+                        'surface-white': 'var(--surface-white)',
+                        'surface-container-low': 'var(--surface-container-low)',
+                        'surface-container-high': 'var(--surface-container-high)',
+                        'bg-soft-pink': 'var(--bg-soft-pink)',
+                        primary: 'var(--primary)',
+                        'primary-container': 'var(--primary-container)',
+                        'on-primary': 'var(--on-primary)',
+                        'on-surface': 'var(--on-surface)',
+                        'on-surface-variant': 'var(--on-surface-variant)',
+                        'text-muted': 'var(--text-muted)',
+                        'text-disabled': 'var(--text-disabled)',
+                        'border-blush': 'var(--border-blush)',
+                        'expense-red': 'var(--expense-red)',
+                        'income-teal': 'var(--income-teal)',
+                    },
+                    borderRadius: { full: 'var(--radius-full)', xl: 'var(--radius-xl)', '2xl': 'var(--radius-2xl)' },
+                    fontFamily: { body: ['Be Vietnam Pro', 'sans-serif'], display: ['Plus Jakarta Sans', 'sans-serif'] },
+                    backgroundImage: { 'primary-gradient': 'var(--primary-gradient)' },
+                },
+            },
+        };
+    </script>
+    <style>
+        .keypad-btn { transition: background-color 0.1s ease; }
+        .keypad-btn:active { background-color: var(--primary-container); }
+    </style>
+</head>
+<body class="bg-bg-soft-pink min-h-screen text-on-surface font-body flex flex-col pb-24">
+
+    <main class="max-w-md mx-auto w-full flex-1 flex flex-col px-5 pt-4 pb-8">
+
+        <!-- 顶部应用栏：支出/收入 切换(单独居中) -->
+        <header class="flex justify-center items-center h-12 mb-3">
+            <div class="flex bg-surface-container-high rounded-full p-1 relative w-48">
+                <div class="absolute h-[calc(100%-8px)] w-[calc(50%-4px)] bg-surface-white rounded-full shadow-sm transition-transform duration-300 ease-in-out left-1 top-1" id="segment-highlighter"></div>
+                <button id="btn-expense" class="flex-1 relative z-10 py-1.5 text-center text-expense-red font-bold transition-colors text-[13px]">支出</button>
+                <button id="btn-income" class="flex-1 relative z-10 py-1.5 text-center text-text-muted transition-colors text-[13px]">收入</button>
+            </div>
+        </header>
+
+        <!-- 金额 + 备注 卡(主色之外的视觉焦点) -->
+        <section class="rounded-3xl bg-surface-white border border-border-blush p-5 mb-4 shadow-soft">
+            <div class="flex items-center gap-2 min-h-[24px]">
+                <span id="category-icon-display" class="text-xl leading-none">🛒</span>
+                <span id="category-name-display" class="text-[13px] text-text-muted">请选择分类</span>
+            </div>
+            <div class="flex items-baseline justify-end mt-3 overflow-hidden">
+                <span class="text-[18px] text-text-muted mr-1 font-display" id="currency-symbol">¥</span>
+                <span id="amount-display" class="text-[44px] text-on-surface font-extrabold font-display truncate leading-none">0.00</span>
+            </div>
+            <div class="mt-4 flex items-center gap-2 border-t border-border-blush pt-3">
+                <span class="material-symbols-outlined text-text-muted text-[18px]">edit_note</span>
+                <input id="note-input" type="text" placeholder="添加备注（选填）" maxlength="50" class="flex-1 bg-transparent border-none text-[13px] text-on-surface placeholder:text-text-disabled p-0 h-6 outline-none" />
+            </div>
+        </section>
+
+        <!-- 分类网格 卡 -->
+        <section class="rounded-2xl bg-surface-white border border-border-blush p-4 mb-4">
+            <div id="category-grid" class="grid grid-cols-4 gap-y-4 gap-x-2"></div>
+        </section>
+
+        <!-- 日期选择 + 数字键盘 卡 -->
+        <section class="rounded-2xl bg-surface-white border border-border-blush overflow-hidden">
+            <div class="flex items-center justify-between px-4 py-2.5 border-b border-border-blush">
+                <button id="date-btn" class="flex items-center gap-1.5 text-[13px] text-on-surface font-medium bg-surface-container-low px-3 py-1.5 rounded-full">
+                    <span class="material-symbols-outlined text-[16px] text-text-muted">calendar_today</span>
+                    <span id="date-label">今天</span>
+                </button>
+            </div>
+            <!-- 4×4 计算器布局,保存键占右下 2 行,主色渐变高亮 -->
+            <div class="grid grid-cols-4 grid-rows-4 h-60">
+                <button class="keypad-btn text-[20px] text-on-surface font-medium border-r border-b border-border-blush/50" data-num="1">1</button>
+                <button class="keypad-btn text-[20px] text-on-surface font-medium border-r border-b border-border-blush/50" data-num="2">2</button>
+                <button class="keypad-btn text-[20px] text-on-surface font-medium border-r border-b border-border-blush/50" data-num="3">3</button>
+                <button id="btn-backspace" class="keypad-btn flex items-center justify-center text-text-muted border-b border-border-blush/50">
+                    <span class="material-symbols-outlined text-[22px]">backspace</span>
+                </button>
+
+                <button class="keypad-btn text-[20px] text-on-surface font-medium border-r border-b border-border-blush/50" data-num="4">4</button>
+                <button class="keypad-btn text-[20px] text-on-surface font-medium border-r border-b border-border-blush/50" data-num="5">5</button>
+                <button class="keypad-btn text-[20px] text-on-surface font-medium border-r border-b border-border-blush/50" data-num="6">6</button>
+                <button id="btn-clear-key" class="keypad-btn text-[16px] text-text-muted font-medium border-b border-border-blush/50">C</button>
+
+                <button class="keypad-btn text-[20px] text-on-surface font-medium border-r border-b border-border-blush/50" data-num="7">7</button>
+                <button class="keypad-btn text-[20px] text-on-surface font-medium border-r border-b border-border-blush/50" data-num="8">8</button>
+                <button class="keypad-btn text-[20px] text-on-surface font-medium border-r border-b border-border-blush/50" data-num="9">9</button>
+                <button id="btn-save" class="row-span-2 m-1.5 rounded-2xl bg-primary-gradient text-on-primary font-semibold text-[15px] tracking-wide active:scale-[0.97] transition-all" style="box-shadow: 0 4px 14px color-mix(in srgb, var(--primary) 35%, transparent);">
+                    记一笔
+                </button>
+
+                <button class="keypad-btn text-[20px] text-on-surface font-medium border-r border-border-blush/50 col-span-2" data-num="0">0</button>
+                <button class="keypad-btn text-[20px] text-on-surface font-medium border-r border-border-blush/50" data-num=".">.</button>
+            </div>
+        </section>
+    </main>
+
+    <!-- 底部导航(中间 [+] 记一笔) -->
+    <div id="bottom-nav" data-active="record"></div>
+
+    <script src="../shared/js/auth.js"></script>
+    <script src="../shared/js/utils.js"></script>
+    <script src="../shared/js/data.js"></script>
+    <script src="../shared/js/nav.js"></script>
+
+    <script>
+        /* 路由守卫:未登录则跳转 login.html */
+        if (!Auth.requireAuth()) {} else { init(); }
+
+        async function init() {
+            try {
+                await MockData.init();
+            } catch (err) {
+                console.error('[record] 数据加载失败:', err);
+            }
+
+            /* ========== 状态 ========== */
+            let isExpense = true;
+            let selectedCategory = null;
+            let inputString = '';
+            let recordDate = Utils.today();
+
+            const amountDisplay = document.getElementById('amount-display');
+            const iconDisplay  = document.getElementById('category-icon-display');
+            const nameDisplay  = document.getElementById('category-name-display');
+            const dateLabel    = document.getElementById('date-label');
+            const grid         = document.getElementById('category-grid');
+
+            /* ========== 渲染分类网格 ==========
+             * 真实后端的 categories 表返回 emoji 字符串(c.icon)
+             * DataStore.getCategoryById 把它映射成 {id, name, emoji, color}
+             */
+            const renderCategories = () => {
+                const list = isExpense ? MockData.expenseCategories : MockData.incomeCategories;
+                if (!list.length) {
+                    grid.innerHTML = `<div class="col-span-4 text-center text-text-muted text-[12px] py-6">暂无${isExpense ? '支出' : '收入'}分类</div>`;
+                    return;
+                }
+                grid.innerHTML = list.slice(0, 8).map((c) => {
+                    const meta = MockData.getCategoryById(c.id) || { emoji: '📦', color: '#FF6B9D' };
+                    return `
+                    <button data-cat="${c.id}" class="cat-btn flex flex-col items-center gap-1.5">
+                        <div class="w-12 h-12 rounded-full flex items-center justify-center text-2xl border-2 border-transparent transition-all active:scale-95"
+                             style="background-color: ${meta.color}20">${meta.emoji}</div>
+                        <span class="text-[11px] text-text-muted">${Utils.escapeHtml(c.name)}</span>
+                    </button>`;
+                }).join('');
+                grid.querySelectorAll('.cat-btn').forEach((btn) => {
+                    btn.addEventListener('click', () => selectCategory(parseInt(btn.dataset.cat, 10)));
+                });
+                if (list.length > 0) selectCategory(list[0].id);
+            };
+
+            const selectCategory = (id) => {
+                const cat = MockData.getCategoryById(id);
+                if (!cat) return;
+                selectedCategory = { id, ...cat };
+                iconDisplay.textContent = cat.emoji;
+                nameDisplay.textContent = cat.name;
+                grid.querySelectorAll('.cat-btn > div').forEach((el) => {
+                    el.classList.remove('border-2');
+                    el.style.borderColor = 'transparent';
+                });
+                const active = grid.querySelector(`[data-cat="${id}"] > div`);
+                if (active) {
+                    active.classList.add('border-2');
+                    active.style.borderColor = cat.color;
+                }
+            };
+
+            /* ========== 支出/收入切换 ========== */
+            const highlighter = document.getElementById('segment-highlighter');
+            const btnExpense = document.getElementById('btn-expense');
+            const btnIncome  = document.getElementById('btn-income');
+
+            const switchType = (toExpense) => {
+                if (toExpense === isExpense) return;
+                isExpense = toExpense;
+                highlighter.style.transform = toExpense ? 'translateX(0)' : 'translateX(100%)';
+                if (toExpense) {
+                    btnExpense.classList.add('text-expense-red', 'font-bold');
+                    btnExpense.classList.remove('text-text-muted');
+                    btnIncome.classList.remove('text-income-teal', 'font-bold');
+                    btnIncome.classList.add('text-text-muted');
+                } else {
+                    btnIncome.classList.add('text-income-teal', 'font-bold');
+                    btnIncome.classList.remove('text-text-muted');
+                    btnExpense.classList.remove('text-expense-red', 'font-bold');
+                    btnExpense.classList.add('text-text-muted');
+                }
+                selectedCategory = null;
+                iconDisplay.textContent = '';
+                nameDisplay.textContent = '';
+                renderCategories();
+            };
+            btnExpense.addEventListener('click', () => switchType(true));
+            btnIncome.addEventListener('click',  () => switchType(false));
+
+            /* ========== 数字键盘 ========== */
+            const updateDisplay = () => { amountDisplay.textContent = inputString || '0.00'; };
+            const appendNumber = (n) => {
+                if (inputString === '0' && n !== '.') inputString = n;
+                else if (n === '.' && inputString.includes('.')) return;
+                else if (inputString.includes('.') && inputString.split('.')[1].length >= 2) return;
+                else inputString += n;
+                updateDisplay();
+            };
+            document.querySelectorAll('[data-num]').forEach((btn) => {
+                btn.addEventListener('click', () => appendNumber(btn.dataset.num));
+            });
+            document.getElementById('btn-backspace').addEventListener('click', () => {
+                inputString = inputString.slice(0, -1);
+                updateDisplay();
+            });
+            const clearAmount = () => { inputString = ''; updateDisplay(); };
+            document.getElementById('btn-clear-key').addEventListener('click', clearAmount);
+
+            /* ========== 日期切换 ========== */
+            document.getElementById('date-btn').addEventListener('click', () => {
+                const days = ['今天', '昨天', '前天'];
+                const cur  = dateLabel.textContent;
+                const idx  = days.indexOf(cur);
+                const next = days[(idx + 1) % days.length];
+                dateLabel.textContent = next;
+                const d = new Date();
+                d.setDate(d.getDate() - idx);
+                // 用本地时区组装日期,避免 toISOString 的 UTC 偏移
+                const pad = (n) => String(n).padStart(2, '0');
+                recordDate = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+            });
+
+            /* ========== 保存(走真实 API)========== */
+            const saveBtn = document.getElementById('btn-save');
+            saveBtn.addEventListener('click', async () => {
+                if (!selectedCategory) { alert('请选择一个分类'); return; }
+                if (!inputString || parseFloat(inputString) === 0) { alert('请输入金额'); return; }
+                if (!Auth.isLoggedIn()) { alert('会话已过期,请重新登录'); window.location.href = 'login.html'; return; }
+
+                const note = document.getElementById('note-input').value.trim();
+                saveBtn.disabled = true;
+                const oldText = saveBtn.textContent;
+                saveBtn.textContent = '保存中…';
+                try {
+                    await MockData.addTransaction({
+                        type:       isExpense ? 'expense' : 'income',
+                        amount:     parseFloat(inputString),
+                        categoryId: selectedCategory.id,
+                        date:       recordDate,
+                        note,
+                    });
+                    alert('保存成功 ✨');
+                    window.location.href = 'home.html';
+                } catch (err) {
+                    alert('保存失败:' + (err.message || '未知错误'));
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = oldText;
+                }
+            });
+
+            /* ========== 首次渲染 ========== */
+            document.getElementById('currency-symbol').textContent = Utils.getCurrencySymbol();
+            renderCategories();
+            BottomNav.init();
+        }
+    </script>
+</body>
+</html>
