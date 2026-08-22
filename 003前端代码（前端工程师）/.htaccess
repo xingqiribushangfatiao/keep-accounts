@@ -1,6 +1,0 @@
-# 把 pages/login.html 设为目录默认入口（替代已删除的 index.html）
-# 访问 http://host/ 时，Apache 会自动加载 pages/login.html
-DirectoryIndex pages/login.html
-
-# 可选：禁止目录列表（防止其他目录被列出）
-Options -Indexes
