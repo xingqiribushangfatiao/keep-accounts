@@ -143,14 +143,14 @@
             document.getElementById('month-balance').textContent  = Utils.formatCurrency(s.monthBalance);
             document.getElementById('budget-remain').textContent  = Utils.formatCurrency(s.budgetRemain);
 
-            // 今日支出 + 笔数
+            // 今日支出 + 笔数(只算支出,不算收入)
             const todayStr = Utils.today();
-            const todayTxs = MockData.transactions.filter((t) => t.date === todayStr);
-            const todayTotal = todayTxs
-                .filter((t) => t.type === 'expense')
-                .reduce((sum, t) => sum + t.amount, 0);
+            const todayExpenseTxs = MockData.transactions.filter(
+                (t) => t.date === todayStr && t.type === 'expense'
+            );
+            const todayTotal = todayExpenseTxs.reduce((sum, t) => sum + t.amount, 0);
             document.getElementById('today-expense').textContent = Utils.formatCurrency(todayTotal);
-            document.getElementById('today-count').textContent   = `${todayTxs.length} 笔`;
+            document.getElementById('today-count').textContent   = `${todayExpenseTxs.length} 笔`;
 
             // 最近 4 条记录
             const recents = MockData.transactions.slice(0, 4);

@@ -95,11 +95,29 @@ const Auth = (() => {
 
     /* ========== 通用 fetch 封装 ========== */
     const postJSON = async (path, body) => {
-        const res = await fetch(`${API_BASE}${path}`, {
-            method:  'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify(body),
-        });
+        let res;
+        try {
+            res = await fetch(`${API_BASE}${path}`, {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify(body),
+            });
+        } catch (netErr) {
+            // fetch 直接抛错 = 网络层就连不上(后端没起 / 跨域被拦 / file:// 协议)
+            // 把干巴巴的 "Failed to fetch" 翻译成可操作的提示
+            const isFileProtocol = typeof window !== 'undefined'
+                && window.location.protocol === 'file:';
+            let hint;
+            if (isFileProtocol) {
+                hint = '检测到当前页面是 file:// 协议,浏览器会拦截跨源请求。请改用 VSCode Live Server 或 http:// 方式打开';
+            } else {
+                hint = `请确认后端已启动(默认 ${API_BASE.replace(/\/api$/, '')})`;
+            }
+            const err = new Error(`无法连接后端 (${netErr.message || 'network error'})。${hint}`);
+            err.code    = 'NETWORK_ERROR';
+            err.cause   = netErr;
+            throw err;
+        }
         let data = null;
         try { data = await res.json(); } catch { /* 非 JSON 响应 */ }
         if (!res.ok || (data && data.code && data.code !== 'OK')) {
@@ -208,6 +226,34 @@ const Auth = (() => {
         login, register, logout, apiFetch,
         // 给 settings 头像上传等需要直传后端的场景用
         API_BASE,
+        // 登录页用:探测后端是否可达,返回 { ok, message, apiBase, isFileProtocol }
+        async checkBackend() {
+            const apiBase = API_BASE;
+            const isFileProtocol = typeof window !== 'undefined'
+                && window.location.protocol === 'file:';
+            try {
+                const res = await fetch(`${apiBase}/health`, { method: 'GET' });
+                if (!res.ok) {
+                    return { ok: false, apiBase, isFileProtocol,
+                        message: `后端返回 HTTP ${res.status},请检查服务是否正常` };
+                }
+                const data = await res.json().catch(() => null);
+                if (data && data.code === 'OK') {
+                    return { ok: true, apiBase, isFileProtocol, message: '后端在线 ✓' };
+                }
+                return { ok: false, apiBase, isFileProtocol,
+                    message: '后端响应格式异常,可能是版本不匹配' };
+            } catch (err) {
+                let hint;
+                if (isFileProtocol) {
+                    hint = '当前是 file:// 协议,浏览器会拦截跨源请求。请用 VSCode Live Server 打开 pages/login.html';
+                } else {
+                    hint = '请在 backend/ 目录执行 npm start 启动服务(默认 :3000)';
+                }
+                return { ok: false, apiBase, isFileProtocol,
+                    message: `后端不可达 (${err.message || 'network error'})。${hint}` };
+            }
+        },
     };
 })();
 

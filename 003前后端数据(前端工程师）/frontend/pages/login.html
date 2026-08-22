@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>登录 · Petal Ledger</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+
+    <link rel="stylesheet" href="../shared/css/tokens.css" />
+    <link rel="stylesheet" href="../shared/css/base.css" />
+
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <style>
+        .theme-shadow-logo { box-shadow: 0 4px 16px color-mix(in srgb, var(--primary) 15%, transparent); }
+        .theme-shadow-btn  { box-shadow: 0 6px 18px color-mix(in srgb, var(--primary) 35%, transparent); transition: box-shadow 0.2s, transform 0.15s; }
+        .theme-shadow-btn:hover { box-shadow: 0 8px 22px color-mix(in srgb, var(--primary) 50%, transparent); }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        surface: 'var(--surface)',
+                        'bg-soft-pink': 'var(--bg-soft-pink)',
+                        'surface-white': 'var(--surface-white)',
+                        primary: 'var(--primary)',
+                        'on-primary': 'var(--on-primary)',
+                        'on-surface': 'var(--on-surface)',
+                        'on-surface-variant': 'var(--on-surface-variant)',
+                        'text-muted': 'var(--text-muted)',
+                        'text-disabled': 'var(--text-disabled)',
+                        'border-blush': 'var(--border-blush)',
+                        'expense-red': 'var(--expense-red)',
+                    },
+                    borderRadius: {
+                        full: 'var(--radius-full)',
+                        xl: 'var(--radius-xl)',
+                        '2xl': 'var(--radius-2xl)',
+                    },
+                    fontFamily: {
+                        body: ['Be Vietnam Pro', 'sans-serif'],
+                        display: ['Plus Jakarta Sans', 'sans-serif'],
+                    },
+                    backgroundImage: {
+                        'primary-gradient': 'var(--primary-gradient)',
+                    },
+                },
+            },
+        };
+    </script>
+</head>
+<body class="bg-bg-soft-pink min-h-screen flex flex-col font-body text-on-surface antialiased overflow-x-hidden relative">
+
+    <!-- 装饰性背景模糊圆 -->
+    <div class="absolute -top-32 -left-32 w-96 h-96 rounded-full pointer-events-none" style="background: radial-gradient(circle, color-mix(in srgb, var(--primary) 15%, transparent) 0%, transparent 70%);"></div>
+    <div class="absolute -bottom-40 -right-20 w-96 h-96 rounded-full pointer-events-none" style="background: radial-gradient(circle, color-mix(in srgb, var(--primary-fixed-dim) 20%, transparent) 0%, transparent 70%);"></div>
+
+    <!-- 主内容 -->
+    <main class="flex-1 flex flex-col justify-center px-6 py-10 max-w-md mx-auto w-full relative z-10">
+        <!-- 后端健康检查状态条(失败时高亮,成功时只一行小字) -->
+        <div id="backend-status" class="hidden mb-5 rounded-2xl p-3.5 text-[12px] leading-relaxed border">
+            <div class="flex items-start gap-2">
+                <span id="backend-status-icon" class="text-base leading-none mt-0.5">●</span>
+                <div class="flex-1 min-w-0">
+                    <p id="backend-status-title" class="font-semibold mb-0.5"></p>
+                    <p id="backend-status-detail" class="opacity-90 break-words"></p>
+                </div>
+                <button type="button" id="backend-status-retry"
+                        class="shrink-0 text-[11px] px-2.5 py-1 rounded-full border font-semibold hover:opacity-80">
+                    重试
+                </button>
+            </div>
+        </div>
+
+        <!-- Logo 区域 -->
+        <div class="text-center mb-10 flex flex-col items-center gap-3">
+            <div class="w-20 h-20 rounded-full bg-surface-white flex items-center justify-center text-4xl theme-shadow-logo">
+                💖
+            </div>
+            <h1 class="font-display text-[28px] font-bold tracking-tight">随手记账</h1>
+            <p class="text-text-muted text-[13px]">登录开始记账之旅</p>
+        </div>
+
+        <!-- 登录表单 -->
+        <form id="login-form" class="space-y-5" novalidate>
+            <div>
+                <label for="username" class="block text-[13px] font-semibold text-on-surface mb-2 ml-1">用户名</label>
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-text-muted text-[20px]">person</span>
+                    <input id="username" name="username" type="text" placeholder="zhangsan"
+                           class="input-field" required />
+                </div>
+            </div>
+
+            <div>
+                <label for="password" class="block text-[13px] font-semibold text-on-surface mb-2 ml-1">密码</label>
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-text-muted text-[20px]">lock</span>
+                    <input id="password" name="password" type="password" placeholder="••••••"
+                           class="input-field pl-12 pr-12" required />
+                    <button type="button" aria-label="切换密码显隐" data-password-toggle="password"
+                            class="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-primary transition-colors">
+                        <span class="material-symbols-outlined text-[20px]">visibility</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 记住我 + 忘记密码 -->
+            <div class="flex items-center justify-between pt-1">
+                <label class="flex items-center gap-2 cursor-pointer text-[13px] text-on-surface">
+                    <input type="checkbox" id="remember" name="remember" class="w-4 h-4 rounded border-border-blush text-primary focus:ring-primary" />
+                    记住我 <span class="text-text-muted text-[12px]">（7天免登录）</span>
+                </label>
+                <a href="#" class="text-[13px] text-text-muted hover:text-primary transition-colors">忘记密码?</a>
+            </div>
+
+            <!-- 错误提示 -->
+            <p id="error-msg" class="hidden text-error text-[13px] text-center pt-1"></p>
+
+            <!-- 登录按钮 -->
+            <button type="submit"
+                    class="w-full py-3.5 rounded-full text-on-primary font-semibold text-[15px] tracking-wide bg-primary-gradient theme-shadow-btn active:scale-[0.98]">
+                登 录
+            </button>
+        </form>
+
+        <!-- 注册跳转 -->
+        <div class="text-center mt-6 text-[13px] text-text-muted">
+            还没有账号？
+            <a href="register.html" class="text-primary font-semibold hover:underline">立即注册</a>
+        </div>
+    </main>
+
+    <script src="../shared/js/auth.js"></script>
+    <script>
+        // 密码显隐切换
+        document.addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-password-toggle]');
+            if (!btn) return;
+            const input = document.getElementById(btn.dataset.passwordToggle);
+            const icon = btn.querySelector('.material-symbols-outlined');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.textContent = 'visibility_off';
+            } else {
+                input.type = 'password';
+                icon.textContent = 'visibility';
+            }
+        });
+
+        /* ===== 后端健康检查状态条 =====
+         * 页面打开时探一下 /api/health,失败就高亮提示并给出启动指引
+         * 避免用户填完表单点登录后才发现 "Failed to fetch"
+         */
+        const statusBox    = document.getElementById('backend-status');
+        const statusIcon   = document.getElementById('backend-status-icon');
+        const statusTitle  = document.getElementById('backend-status-title');
+        const statusDetail = document.getElementById('backend-status-detail');
+        const statusRetry  = document.getElementById('backend-status-retry');
+
+        const showStatus = (kind, title, detail) => {
+            // kind: 'ok' | 'warn' | 'err'
+            const palette = {
+                ok:   { bg: '#F0FDF4', border: '#86EFAC', fg: '#15803D' },
+                warn: { bg: '#FFFBEB', border: '#FCD34D', fg: '#B45309' },
+                err:  { bg: '#FEF2F2', border: '#FCA5A5', fg: '#B91C1C' },
+            };
+            const c = palette[kind] || palette.err;
+            statusBox.style.background = c.bg;
+            statusBox.style.borderColor = c.border;
+            statusBox.style.color       = c.fg;
+            statusIcon.textContent  = kind === 'ok' ? '✓' : '!';
+            statusTitle.textContent = title;
+            statusDetail.textContent = detail;
+            statusBox.classList.remove('hidden');
+        };
+
+        const runBackendCheck = async () => {
+            statusRetry.disabled = true;
+            statusRetry.textContent = '检测中...';
+            const r = await Auth.checkBackend();
+            statusRetry.disabled = false;
+            statusRetry.textContent = '重试';
+            if (r.ok) {
+                showStatus('ok', '后端在线', `${r.apiBase} · 可以登录`);
+            } else {
+                showStatus('err', '后端不可达', r.message);
+            }
+        };
+        statusRetry.addEventListener('click', runBackendCheck);
+        runBackendCheck();
+
+        // 登录提交(走真实后端,async)
+        const form = document.getElementById('login-form');
+        const errEl = document.getElementById('error-msg');
+        const submitBtn = form.querySelector('button[type="submit"]');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = form.username.value.trim();
+            const password = form.password.value;
+            const remember = form.remember.checked;
+
+            submitBtn.disabled = true;
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = '登录中...';
+            errEl.classList.add('hidden');
+
+            const result = await Auth.login(username, password, remember);
+            if (result.ok) {
+                window.location.href = 'home.html';
+            } else {
+                errEl.textContent = result.message;
+                errEl.classList.remove('hidden');
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+                // 网络层错误(后端挂了)→ 顺手刷一下顶部状态条
+                if (result.message && result.message.startsWith('无法连接后端')) {
+                    runBackendCheck();
+                }
+            }
+        });
+
+        // 已登录直接进首页（带一个"切换账号"入口，方便测试）
+        if (Auth.isLoggedIn()) {
+            const main = document.querySelector('main');
+            if (main && !document.getElementById('switch-account-bar')) {
+                const bar = document.createElement('div');
+                bar.id = 'switch-account-bar';
+                bar.className = 'text-center text-[12px] text-text-muted mt-4';
+                bar.innerHTML = `已登录为 <span class="text-primary font-semibold">${Auth.getSession().username}</span> · <a href="#" id="switch-account" class="text-primary hover:underline">切换账号</a>`;
+                main.appendChild(bar);
+                document.getElementById('switch-account').addEventListener('click', async (ev) => {
+                    ev.preventDefault();
+                    if (confirm('确定要退出当前账号吗？')) {
+                        await Auth.logout();
+                        window.location.reload();
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>

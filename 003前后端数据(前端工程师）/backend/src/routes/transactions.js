@@ -1,7 +1,9 @@
 /**
  * 交易路由
  * ----------------------------------------------------------------------------
- * GET    /api/transactions?bookId=&type=&month=YYYY-MM
+ * GET    /api/transactions?bookId=&type=&month=YYYY-MM&createdMonth=YYYY-MM
+ *        &categoryId=&limit=&offset=
+ * GET    /api/transactions/available-months
  * POST   /api/transactions
  * PUT    /api/transactions/:id
  * DELETE /api/transactions/:id
@@ -45,20 +47,48 @@ async function resolveBookId(userId, requested) {
 
 /* ==========================================================================
  * GET /api/transactions
+ * Query:
+ *   bookId, type('expense'|'income'),
+ *   month(YYYY-MM 按 transaction_date 月份),
+ *   createdMonth(YYYY-MM 按 created_at 月份),
+ *   categoryId, limit, offset
+ * 不传 limit 时返回数组(向后兼容);传 limit 时返回 {items, total, hasMore, limit, offset}
  * ========================================================================== */
 router.get('/', requireAuth, async (req, res, next) => {
     try {
-        const { bookId, type, month } = req.query;
+        const { bookId, type, month, createdMonth, categoryId, limit, offset } = req.query;
         if (type && !['expense', 'income'].includes(type)) {
             return res.status(400).json({ code: 'TX_TYPE_INVALID', message: 'type 须为 expense/income' });
         }
-        const list = await transactionService.list({
+        const opts = {
             userId: req.user.id,
             bookId: bookId ? parseInt(bookId, 10) : undefined,
             type,
-            month,
-        });
+        };
+        if (createdMonth) opts.createdMonth = String(createdMonth);
+        if (month)        opts.month        = String(month);
+        if (categoryId)   opts.categoryId   = parseInt(categoryId, 10);
+        if (limit  !== undefined) opts.limit  = parseInt(limit,  10);
+        if (offset !== undefined) opts.offset = parseInt(offset, 10);
+        const list = await transactionService.list(opts);
         return res.json({ code: 'OK', data: list });
+    } catch (err) {
+        next(err);
+    }
+});
+
+/* ==========================================================================
+ * GET /api/transactions/available-months
+ * 返回 ['YYYY-MM', ...] 倒序,给 list 页"月份选择器"用
+ * ========================================================================== */
+router.get('/available-months', requireAuth, async (req, res, next) => {
+    try {
+        const { bookId } = req.query;
+        const months = await transactionService.getAvailableMonths({
+            userId: req.user.id,
+            bookId: bookId ? parseInt(bookId, 10) : undefined,
+        });
+        return res.json({ code: 'OK', data: months });
     } catch (err) {
         next(err);
     }
@@ -160,6 +190,29 @@ router.put('/:id', requireAuth, async (req, res, next) => {
             return res.status(404).json({ code: 'TX_NOT_FOUND', message: '交易不存在' });
         }
         return res.json({ code: 'OK', message: '已更新', data: tx });
+    } catch (err) {
+        next(err);
+    }
+});
+
+/* ==========================================================================
+ * DELETE /api/transactions
+ * 清空当前用户(默认账本,或 ?bookId= 指定账本)的所有交易记录
+ * 必须在 /:id 之前注册,否则会被解析成 id
+ * 前端会做二次确认,这里不重复 prompt
+ * ========================================================================== */
+router.delete('/', requireAuth, async (req, res, next) => {
+    try {
+        const bookIdResolved = await resolveBookId(req.user.id, req.query.bookId);
+        const removed = await transactionService.removeAll({
+            userId: req.user.id,
+            bookId: bookIdResolved || undefined,
+        });
+        return res.json({
+            code:    'OK',
+            message: `已清空 ${removed} 条记录`,
+            data:    { removed },
+        });
     } catch (err) {
         next(err);
     }

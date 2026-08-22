@@ -1,0 +1,200 @@
+/* ==========================================================================
+   Petal Ledger (004) - Base Styles
+   --------------------------------------------------------------------------
+   全局基础样式：滚动条、字体、Material Symbols、卡片层级、输入框。
+   ========================================================================== */
+
+/* 隐藏滚动条但保留滚动功能（移动端体验） */
+::-webkit-scrollbar {
+    display: none;
+}
+* {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* 移除移动端点击高亮 */
+* {
+    -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+    font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background-color: var(--bg-soft-pink);
+    color: var(--on-surface);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Material Symbols 默认设置 */
+.material-symbols-outlined {
+    font-family: 'Material Symbols Outlined';
+    font-weight: normal;
+    font-style: normal;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+.material-symbols-outlined.fill {
+    font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* ========== 卡片层级 ========== */
+
+.surface-card {
+    background-color: var(--surface-white);
+    border-radius: var(--radius-xl);
+    box-shadow: 0 2px 8px rgba(255, 107, 157, 0.06);
+}
+
+.interactive-shadow {
+    box-shadow: var(--shadow-level-2);
+}
+
+/* 主色渐变 */
+.primary-gradient {
+    background: var(--primary-gradient);
+}
+
+/* ========== 输入框 ========== */
+
+.input-field {
+    width: 100%;
+    padding: 0.875rem 1rem 0.875rem 2.75rem;
+    background-color: var(--surface-white);
+    border: 1px solid var(--border-blush);
+    border-radius: var(--radius-full);
+    font-family: var(--font-body-lg);
+    font-size: var(--text-body-lg);
+    color: var(--on-surface);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+}
+.input-field:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(255, 107, 157, 0.12);
+}
+.input-field::placeholder {
+    color: var(--text-disabled);
+}
+
+/* ========== 安全区域适配 ========== */
+
+.pb-safe {
+    padding-bottom: var(--safe-area-bottom);
+}
+.pt-safe {
+    padding-top: var(--safe-area-top);
+}
+
+/* ========== 主题外观(可切换,默认 = :root 即浅粉色)========== */
+
+/* 薄荷绿 */
+:root[data-theme="mint"] {
+    --primary: #10AC84;
+    --primary-container: #C8F2E5;
+    --on-primary-container: #003828;
+    --bg-soft-pink: #E5F8F0;
+    --background: #E5F8F0;
+    --border-blush: #CFEBDF;
+    --primary-gradient: linear-gradient(135deg, #10AC84 0%, #6EE7B7 100%);
+    --primary-gradient-strong: linear-gradient(135deg, #10AC84 0%, #2DCC8B 100%);
+    --primary-fixed: #C8F2E5;
+    --primary-fixed-dim: #6EE7B7;
+    --inverse-primary: #6EE7B7;
+    --surface-tint: #10AC84;
+    --expense-red: #10AC84;
+    --surface-container-low: #F0FAF5;
+    --surface-container: #E8F5EE;
+    --surface-container-high: #D8EFE2;
+    --surface-container-highest: #C8E9D6;
+    --surface-variant: #C8E9D6;
+    --shadow-level-2: 0 6px 18px rgba(16, 172, 132, 0.25);
+    --shadow-card: 0 4px 16px rgba(16, 172, 132, 0.08);
+    --shadow-soft: 0 2px 8px rgba(16, 172, 132, 0.05);
+    --shadow-bottom-nav: 0 -4px 16px rgba(16, 172, 132, 0.08);
+}
+
+/* 橘子橙 */
+:root[data-theme="orange"] {
+    --primary: #FF8C42;
+    --primary-container: #FFE0CC;
+    --on-primary-container: #6B2D00;
+    --bg-soft-pink: #FFF0E0;
+    --background: #FFF0E0;
+    --border-blush: #FFDDB8;
+    --primary-gradient: linear-gradient(135deg, #FF8C42 0%, #FFB088 100%);
+    --primary-gradient-strong: linear-gradient(135deg, #FF8C42 0%, #FF7A1F 100%);
+    --primary-fixed: #FFE0CC;
+    --primary-fixed-dim: #FFB088;
+    --inverse-primary: #FFB088;
+    --surface-tint: #FF8C42;
+    --expense-red: #FF8C42;
+    --surface-container-low: #FFF7EE;
+    --surface-container: #FFEFE0;
+    --surface-container-high: #FFE2C7;
+    --surface-container-highest: #FFD7B0;
+    --surface-variant: #FFD7B0;
+    --shadow-level-2: 0 6px 18px rgba(255, 140, 66, 0.25);
+    --shadow-card: 0 4px 16px rgba(255, 140, 66, 0.08);
+    --shadow-soft: 0 2px 8px rgba(255, 140, 66, 0.05);
+    --shadow-bottom-nav: 0 -4px 16px rgba(255, 140, 66, 0.08);
+}
+
+/* 浅紫色 */
+:root[data-theme="purple"] {
+    --primary: #A78BFA;
+    --primary-container: #E0D6FF;
+    --on-primary-container: #2E1F69;
+    --bg-soft-pink: #F0EAFF;
+    --background: #F0EAFF;
+    --border-blush: #DDD0FF;
+    --primary-gradient: linear-gradient(135deg, #A78BFA 0%, #C4B0FF 100%);
+    --primary-gradient-strong: linear-gradient(135deg, #A78BFA 0%, #8B6FE3 100%);
+    --primary-fixed: #E0D6FF;
+    --primary-fixed-dim: #C4B0FF;
+    --inverse-primary: #C4B0FF;
+    --surface-tint: #A78BFA;
+    --expense-red: #A78BFA;
+    --surface-container-low: #F7F3FF;
+    --surface-container: #EFE8FF;
+    --surface-container-high: #DFD2FF;
+    --surface-container-highest: #CFC0FF;
+    --surface-variant: #CFC0FF;
+    --shadow-level-2: 0 6px 18px rgba(167, 139, 250, 0.25);
+    --shadow-card: 0 4px 16px rgba(167, 139, 250, 0.08);
+    --shadow-soft: 0 2px 8px rgba(167, 139, 250, 0.05);
+    --shadow-bottom-nav: 0 -4px 16px rgba(167, 139, 250, 0.08);
+}
+
+/* 浅蓝色 */
+:root[data-theme="blue"] {
+    --primary: #60A5FA;
+    --primary-container: #DBEAFE;
+    --on-primary-container: #1E3A8A;
+    --bg-soft-pink: #E6F0FF;
+    --background: #E6F0FF;
+    --border-blush: #C7DCFF;
+    --primary-gradient: linear-gradient(135deg, #60A5FA 0%, #93C5FD 100%);
+    --primary-gradient-strong: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
+    --primary-fixed: #DBEAFE;
+    --primary-fixed-dim: #93C5FD;
+    --inverse-primary: #93C5FD;
+    --surface-tint: #60A5FA;
+    --expense-red: #60A5FA;
+    --surface-container-low: #F0F6FF;
+    --surface-container: #E0EBFF;
+    --surface-container-high: #CFE0FF;
+    --surface-container-highest: #B8D2FF;
+    --surface-variant: #B8D2FF;
+    --shadow-level-2: 0 6px 18px rgba(96, 165, 250, 0.25);
+    --shadow-card: 0 4px 16px rgba(96, 165, 250, 0.08);
+    --shadow-soft: 0 2px 8px rgba(96, 165, 250, 0.05);
+    --shadow-bottom-nav: 0 -4px 16px rgba(96, 165, 250, 0.08);
+}

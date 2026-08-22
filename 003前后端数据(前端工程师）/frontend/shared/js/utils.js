@@ -44,6 +44,14 @@ const Utils = (() => {
         return `${d.getMonth() + 1}月${d.getDate()}日`;
     };
 
+    /* ========== 长日期(2026年08月21日)给 list 页分组标题用 ========== */
+    // pad2 复用下面"日期(本地时区)"区块已声明的版本,避免 const 重名 SyntaxError
+    const formatDateLong = (date) => {
+        const d = (date instanceof Date) ? date : new Date(date);
+        if (Number.isNaN(d.getTime())) return '';
+        return `${d.getFullYear()}年${pad2(d.getMonth() + 1)}月${pad2(d.getDate())}日`;
+    };
+
     const formatDateWithWeekday = (dateStr) => {
         const d = new Date(dateStr);
         const weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
@@ -92,6 +100,7 @@ const Utils = (() => {
     return {
         formatCurrency,
         formatDate,
+        formatDateLong,
         formatDateWithWeekday,
         relativeDate,
         today,

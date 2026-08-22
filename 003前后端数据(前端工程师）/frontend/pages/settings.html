@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>设置 · Petal Ledger</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+
+    <link rel="stylesheet" href="../shared/css/tokens.css" />
+    <link rel="stylesheet" href="../shared/css/base.css" />
+
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        surface: 'var(--surface)',
+                        'surface-white': 'var(--surface-white)',
+                        'bg-soft-pink': 'var(--bg-soft-pink)',
+                        primary: 'var(--primary)',
+                        'primary-container': 'var(--primary-container)',
+                        'on-primary': 'var(--on-primary)',
+                        'on-surface': 'var(--on-surface)',
+                        'text-muted': 'var(--text-muted)',
+                        'text-disabled': 'var(--text-disabled)',
+                        'border-blush': 'var(--border-blush)',
+                        'expense-red': 'var(--expense-red)',
+                        'income-teal': 'var(--income-teal)',
+                    },
+                    borderRadius: { full: 'var(--radius-full)', xl: 'var(--radius-xl)', '2xl': 'var(--radius-2xl)' },
+                    fontFamily: { body: ['Be Vietnam Pro', 'sans-serif'], display: ['Plus Jakarta Sans', 'sans-serif'] },
+                    backgroundImage: { 'primary-gradient': 'var(--primary-gradient)' },
+                },
+            },
+        };
+    </script>
+    <style>
+        .settings-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            background: var(--surface-white);
+            border-bottom: 1px solid var(--border-blush);
+            transition: background 0.15s;
+            cursor: pointer;
+        }
+        .settings-row:last-child { border-bottom: none; }
+        .settings-row:active { background: var(--surface-container-low); }
+        .row-icon {
+            width: 36px; height: 36px;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--primary-container);
+            color: var(--primary);
+        }
+        .row-icon.alt-1 { background: #D4F5F2; color: #4ECDC4; }
+        .row-icon.alt-2 { background: #FFE9B3; color: #FECA57; }
+        .row-icon.alt-3 { background: #FFD9D9; color: #E83E5C; }
+
+        /* 货币选择弹窗 */
+        @keyframes modal-in {
+            from { opacity: 0; transform: scale(0.95) translateY(8px); }
+            to   { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        @keyframes backdrop-in {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
+        #currency-modal.show > div:last-child,
+        #theme-modal.show > div:last-child { animation: modal-in 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
+        #currency-modal.show #currency-backdrop,
+        #theme-modal.show #theme-backdrop { animation: backdrop-in 0.2s ease-out; }
+        .currency-option,
+        .theme-option { background: var(--surface-white); }
+        .currency-option.selected,
+        .theme-option.selected { background: var(--primary-container); border-color: var(--primary) !important; }
+
+        /* 头像:点击/悬停提示 */
+        .avatar-hint {
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            pointer-events: none;
+        }
+        #avatar-btn:hover .avatar-hint,
+        #avatar-btn:focus-visible .avatar-hint { opacity: 1; }
+    </style>
+</head>
+<body class="bg-bg-soft-pink min-h-screen text-on-surface font-body pb-24">
+
+    <main class="max-w-md mx-auto pb-8">
+
+        <header class="px-5 pt-6 pb-5">
+            <h1 class="font-display text-[22px] font-bold text-center">我的</h1>
+        </header>
+
+        <!-- 账号卡片 -->
+        <section class="px-5 mb-6">
+            <div class="rounded-3xl p-5 flex items-center gap-4 relative overflow-hidden" style="background: var(--primary-gradient-strong); box-shadow: 0 8px 24px color-mix(in srgb, var(--primary) 30%, transparent);">
+                <div class="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-white/10 pointer-events-none"></div>
+                <input type="file" id="avatar-input" accept="image/*" class="hidden" />
+                <button type="button" id="avatar-btn"
+                        class="w-16 h-16 rounded-full bg-white shrink-0 shadow-lg overflow-hidden relative cursor-pointer active:scale-95 transition-transform p-0"
+                        aria-label="点击更换头像">
+                    <div id="avatar-content" class="w-full h-full flex items-center justify-center text-3xl">✨</div>
+                    <span class="avatar-hint absolute inset-0 flex items-center justify-center bg-black/40 text-white"
+                          style="border-radius: 9999px;">
+                        <span class="material-symbols-outlined text-[20px]">photo_camera</span>
+                    </span>
+                </button>
+                <div class="flex-1 min-w-0 text-white">
+                    <p class="font-display text-[18px] font-bold truncate" id="user-name">Petal User</p>
+                    <p class="text-[12px] text-white/80 mt-0.5">ID: demo-user-001</p>
+                </div>
+                <span class="material-symbols-outlined text-white/70">chevron_right</span>
+            </div>
+        </section>
+
+        <!-- 偏好设置 -->
+        <section class="px-5 mb-6">
+            <h2 class="text-[12px] font-semibold text-text-muted tracking-wider mb-2.5 px-1">偏好设置</h2>
+            <div class="rounded-2xl overflow-hidden border border-border-blush">
+                <div class="settings-row" data-action="currency">
+                    <div class="row-icon alt-1"><span class="material-symbols-outlined text-[20px]">payments</span></div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-[14px] font-semibold text-on-surface">货币单位</p>
+                        <p class="text-[12px] text-text-muted mt-0.5" id="currency-display">人民币 (¥)</p>
+                    </div>
+                    <span class="material-symbols-outlined text-text-muted text-[18px]">chevron_right</span>
+                </div>
+                <div class="settings-row" data-action="theme">
+                    <div class="row-icon alt-2"><span class="material-symbols-outlined text-[20px]">palette</span></div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-[14px] font-semibold text-on-surface">主题外观</p>
+                        <p class="text-[12px] text-text-muted mt-0.5" id="theme-display">浅粉色</p>
+                    </div>
+                    <span class="material-symbols-outlined text-text-muted text-[18px]">chevron_right</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- 数据管理 -->
+        <section class="px-5 mb-6">
+            <h2 class="text-[12px] font-semibold text-text-muted tracking-wider mb-2.5 px-1">数据管理</h2>
+            <div class="rounded-2xl overflow-hidden border border-border-blush">
+                <div class="settings-row" data-action="export">
+                    <div class="row-icon alt-2"><span class="material-symbols-outlined text-[20px]">file_download</span></div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-[14px] font-semibold text-on-surface">导出数据</p>
+                        <p class="text-[12px] text-text-muted mt-0.5">导出为 Excel</p>
+                    </div>
+                    <span class="material-symbols-outlined text-text-muted text-[18px]">chevron_right</span>
+                </div>
+                <div class="settings-row" data-action="clear">
+                    <div class="row-icon alt-3"><span class="material-symbols-outlined text-[20px]">delete_sweep</span></div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-[14px] font-semibold text-on-surface">清空记录</p>
+                        <p class="text-[12px] text-text-muted mt-0.5">清空所有记账数据</p>
+                    </div>
+                    <span class="material-symbols-outlined text-text-muted text-[18px]">chevron_right</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- 退出登录 -->
+        <section class="px-5">
+            <button id="logout-btn" class="w-full py-3.5 rounded-2xl bg-surface-white text-expense-red font-semibold text-[15px] border border-border-blush active:scale-[0.98] transition-transform">
+                退出登录
+            </button>
+            <p class="text-center text-[11px] text-text-disabled mt-4">Petal Ledger v1.0.0</p>
+        </section>
+    </main>
+
+    <!-- 货币单位选择弹窗 -->
+    <div id="currency-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-5">
+        <div id="currency-backdrop" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+        <div class="relative w-full max-w-sm bg-surface-white rounded-3xl p-6 shadow-[0_12px_40px_rgba(0,0,0,0.2)]">
+            <div class="flex items-center justify-between mb-5">
+                <h3 class="font-display text-[18px] font-bold text-on-surface">选择货币单位</h3>
+                <button id="currency-close" class="w-8 h-8 rounded-full hover:bg-primary-container flex items-center justify-center text-text-muted active:scale-95 transition" aria-label="关闭">
+                    <span class="material-symbols-outlined text-[20px]">close</span>
+                </button>
+            </div>
+            <div class="space-y-2.5" id="currency-options"></div>
+        </div>
+    </div>
+
+    <!-- 主题外观选择弹窗 -->
+    <div id="theme-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-5">
+        <div id="theme-backdrop" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+        <div class="relative w-full max-w-sm bg-surface-white rounded-3xl p-6 shadow-[0_12px_40px_rgba(0,0,0,0.2)]">
+            <div class="flex items-center justify-between mb-5">
+                <h3 class="font-display text-[18px] font-bold text-on-surface">选择主题外观</h3>
+                <button id="theme-close" class="w-8 h-8 rounded-full hover:bg-primary-container flex items-center justify-center text-text-muted active:scale-95 transition" aria-label="关闭">
+                    <span class="material-symbols-outlined text-[20px]">close</span>
+                </button>
+            </div>
+            <div class="space-y-2.5" id="theme-options"></div>
+        </div>
+    </div>
+
+    <div id="bottom-nav" data-active="settings"></div>
+
+    <script src="../shared/js/auth.js"></script>
+    <script src="../shared/js/utils.js"></script>
+    <script src="../shared/js/data.js"></script>
+    <script src="../shared/js/nav.js"></script>
+
+    <!-- SheetJS(导出 .xlsx 用) -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+    <script>
+        /* ========== 货币设置(localStorage 持久化)========== */
+        const CURRENCIES = [
+            { code: 'CNY', name: '人民币', symbol: '¥', flag: '🇨🇳', desc: 'CNY · 人民币元' },
+            { code: 'USD', name: '美元',   symbol: '$', flag: '🇺🇸', desc: 'USD · US Dollar' },
+            { code: 'EUR', name: '欧元',   symbol: '€', flag: '🇪🇺', desc: 'EUR · Euro' },
+        ];
+        const CURRENCY_KEY = 'petal:settings:currency';
+
+        const getCurrency = () => localStorage.getItem(CURRENCY_KEY) || 'CNY';
+        const setCurrency = (code) => localStorage.setItem(CURRENCY_KEY, code);
+
+        const updateCurrencyDisplay = (code) => {
+            const cur = CURRENCIES.find((c) => c.code === code);
+            if (cur) document.getElementById('currency-display').textContent = `${cur.name} (${cur.symbol})`;
+        };
+
+        const renderCurrencyOptions = () => {
+            const current = getCurrency();
+            const wrap = document.getElementById('currency-options');
+            wrap.innerHTML = CURRENCIES.map((c) => {
+                const isSel = c.code === current;
+                return `
+                <button data-code="${c.code}" class="currency-option w-full flex items-center gap-3 p-3.5 rounded-2xl border-2 ${isSel ? 'selected' : 'border-border-blush'} active:scale-[0.98] transition-all">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center text-xl shrink-0" style="background: var(--primary-container)">${c.flag}</div>
+                    <div class="flex-1 text-left min-w-0">
+                        <div class="text-[14px] font-semibold text-on-surface">${c.name} <span class="text-text-muted font-normal">(${c.symbol})</span></div>
+                        <div class="text-[11px] text-text-muted mt-0.5">${c.desc}</div>
+                    </div>
+                    <span class="material-symbols-outlined text-primary text-[24px]" style="font-variation-settings: 'FILL' 1; ${isSel ? '' : 'display:none;'}">check_circle</span>
+                </button>`;
+            }).join('');
+            wrap.querySelectorAll('.currency-option').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    setCurrency(btn.dataset.code);
+                    updateCurrencyDisplay(btn.dataset.code);
+                    renderCurrencyOptions();
+                    closeCurrencyModal();
+                });
+            });
+        };
+
+        const openCurrencyModal = () => {
+            renderCurrencyOptions();
+            const modal = document.getElementById('currency-modal');
+            modal.classList.remove('hidden');
+            requestAnimationFrame(() => modal.classList.add('show'));
+            document.body.style.overflow = 'hidden';
+        };
+
+        const closeCurrencyModal = () => {
+            const modal = document.getElementById('currency-modal');
+            modal.classList.remove('show');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                document.body.style.overflow = '';
+            }, 180);
+        };
+
+        /* ========== 主题外观(localStorage 持久化)========== */
+        const updateThemeDisplay = (id) => {
+            const t = Utils.THEMES[id];
+            if (t) document.getElementById('theme-display').textContent = t.name;
+        };
+
+        const renderThemeOptions = () => {
+            const current = Utils.getTheme();
+            const wrap = document.getElementById('theme-options');
+            wrap.innerHTML = Object.values(Utils.THEMES).map((t) => {
+                const isSel = t.id === current;
+                return `
+                <button data-theme="${t.id}" class="theme-option w-full flex items-center gap-3 p-3.5 rounded-2xl border-2 ${isSel ? 'selected' : 'border-border-blush'} active:scale-[0.98] transition-all">
+                    <div class="w-12 h-12 rounded-full shrink-0 shadow-sm" style="background: ${t.swatch};"></div>
+                    <div class="flex-1 text-left min-w-0">
+                        <div class="text-[14px] font-semibold text-on-surface">${t.name}</div>
+                        <div class="text-[11px] text-text-muted mt-0.5">${t.desc}</div>
+                    </div>
+                    <span class="material-symbols-outlined text-primary text-[24px]" style="font-variation-settings: 'FILL' 1; ${isSel ? '' : 'display:none;'}">check_circle</span>
+                </button>`;
+            }).join('');
+            wrap.querySelectorAll('.theme-option').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    Utils.setTheme(btn.dataset.theme);
+                    updateThemeDisplay(btn.dataset.theme);
+                    renderThemeOptions();
+                    closeThemeModal();
+                });
+            });
+        };
+
+        const openThemeModal = () => {
+            renderThemeOptions();
+            const modal = document.getElementById('theme-modal');
+            modal.classList.remove('hidden');
+            requestAnimationFrame(() => modal.classList.add('show'));
+            document.body.style.overflow = 'hidden';
+        };
+
+        const closeThemeModal = () => {
+            const modal = document.getElementById('theme-modal');
+            modal.classList.remove('show');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                document.body.style.overflow = '';
+            }, 180);
+        };
+
+        /* ========== 头像(走真实后端,localStorage 作本地缓存)==========
+         * 流程:选图 -> 压缩到 256x256 -> 写 localStorage(立即可见) -> PUT /api/users/me/avatar
+         * 加载:先读 localStorage(秒开) -> 后台 GET /api/users/me/avatar 同步到 DB 最新值
+         * ====================================================================== */
+        const AVATAR_KEY_PREFIX = 'petal:user:avatar:';
+        const AVATAR_MAX_SIZE   = 256;   // 边长上限(像素)
+        const AVATAR_QUALITY    = 0.85;  // JPEG 压缩质量
+        const AVATAR_MAX_FILE   = 5 * 1024 * 1024; // 原图 5MB 上限
+
+        const getAvatarKey = (userId) => `${AVATAR_KEY_PREFIX}${userId}`;
+
+        const loadAvatarLocal = (userId) => {
+            try { return localStorage.getItem(getAvatarKey(userId)); }
+            catch { return null; }
+        };
+
+        const setAvatarLocal = (userId, dataUrl) => {
+            try {
+                if (dataUrl) localStorage.setItem(getAvatarKey(userId), dataUrl);
+                else         localStorage.removeItem(getAvatarKey(userId));
+            } catch (err) {
+                console.warn('[avatar] 本地缓存写入失败:', err);
+            }
+        };
+
+        // 从后端拉取最新头像(失败/未登录 -> null)
+        const fetchAvatarFromServer = async () => {
+            if (!Auth.isLoggedIn()) return null;
+            try {
+                const data = await Auth.apiFetch('/users/me/avatar', { method: 'GET' });
+                return (data && data.data && data.data.avatar) || null;
+            } catch (err) {
+                console.warn('[avatar] 从后端拉取失败:', err.message);
+                return null;
+            }
+        };
+
+        // 压缩图片到 256x256 以内,转 JPEG dataURL(大幅缩小 base64 体积)
+        const resizeImage = (file) => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    let { width, height } = img;
+                    if (width >= height && width > AVATAR_MAX_SIZE) {
+                        height = Math.round(height * AVATAR_MAX_SIZE / width);
+                        width  = AVATAR_MAX_SIZE;
+                    } else if (height > AVATAR_MAX_SIZE) {
+                        width  = Math.round(width * AVATAR_MAX_SIZE / height);
+                        height = AVATAR_MAX_SIZE;
+                    }
+                    const canvas = document.createElement('canvas');
+                    canvas.width  = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    resolve(canvas.toDataURL('image/jpeg', AVATAR_QUALITY));
+                };
+                img.onerror = () => reject(new Error('图片解码失败'));
+                img.src = e.target.result;
+            };
+            reader.onerror = () => reject(new Error('文件读取失败'));
+            reader.readAsDataURL(file);
+        });
+
+        // 渲染头像(纯 DOM 操作,无副作用)
+        const paintAvatar = (dataUrl) => {
+            const content = document.getElementById('avatar-content');
+            if (!content) return;
+            content.innerHTML = dataUrl
+                ? `<img src="${dataUrl}" alt="头像" class="w-full h-full object-cover" />`
+                : `<span>✨</span>`;
+        };
+
+        // 初始化:先画本地缓存,再后台拉 DB 最新值覆盖
+        const renderAvatar = async () => {
+            const session = Auth.getSession();
+            if (!session) return;
+            paintAvatar(loadAvatarLocal(session.userId));
+            const remote = await fetchAvatarFromServer();
+            if (remote && remote !== loadAvatarLocal(session.userId)) {
+                setAvatarLocal(session.userId, remote);
+                paintAvatar(remote);
+            }
+        };
+
+        // 选图 -> 压缩 -> 写本地(秒回) -> 上传 DB
+        const handleAvatarSelect = async (e) => {
+            const file = e.target.files && e.target.files[0];
+            e.target.value = ''; // 允许重复选同一张图触发 change
+            if (!file) return;
+            if (!file.type.startsWith('image/')) {
+                alert('请选择图片文件');
+                return;
+            }
+            if (file.size > AVATAR_MAX_FILE) {
+                alert('图片大小不能超过 5MB');
+                return;
+            }
+            if (!Auth.isLoggedIn()) {
+                alert('请先登录后再上传头像');
+                return;
+            }
+
+            const btn = document.getElementById('avatar-btn');
+            btn.disabled = true;
+            try {
+                const dataUrl = await resizeImage(file);
+                const session = Auth.getSession();
+                if (!session) return;
+
+                // 1. 立即写本地 + 渲染
+                setAvatarLocal(session.userId, dataUrl);
+                paintAvatar(dataUrl);
+
+                // 2. 异步上传到后端
+                try {
+                    await Auth.apiFetch('/users/me/avatar', {
+                        method: 'PUT',
+                        body: JSON.stringify({ avatar: dataUrl }),
+                    });
+                } catch (err) {
+                    console.error('[avatar] 上传后端失败:', err);
+                    alert('头像已暂存本地,但上传服务器失败:' + err.message);
+                }
+            } catch (err) {
+                console.error('[avatar] 处理失败:', err);
+                alert('图片处理失败:' + (err.message || '未知错误'));
+            } finally {
+                btn.disabled = false;
+            }
+        };
+
+        function init() {
+            const session = Auth.getSession();
+            if (session) {
+                document.getElementById('user-name').textContent = session.username;
+            }
+            // 初始化货币 / 主题显示
+            updateCurrencyDisplay(getCurrency());
+            updateThemeDisplay(Utils.getTheme());
+
+            // 弹窗交互绑定
+            document.getElementById('currency-close').addEventListener('click', closeCurrencyModal);
+            document.getElementById('currency-backdrop').addEventListener('click', closeCurrencyModal);
+            document.getElementById('theme-close').addEventListener('click', closeThemeModal);
+            document.getElementById('theme-backdrop').addEventListener('click', closeThemeModal);
+
+            // 头像上传:点按钮 -> 触发隐藏的 file input
+            document.getElementById('avatar-input').addEventListener('change', handleAvatarSelect);
+            document.getElementById('avatar-btn').addEventListener('click', () => {
+                document.getElementById('avatar-input').click();
+            });
+            // 异步加载:先 paint 缓存,再后台拉 DB 同步
+            renderAvatar().catch((err) => console.error('[avatar] 初始化加载失败:', err));
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    if (!document.getElementById('currency-modal').classList.contains('hidden')) {
+                        closeCurrencyModal();
+                    } else if (!document.getElementById('theme-modal').classList.contains('hidden')) {
+                        closeThemeModal();
+                    }
+                }
+            });
+
+            BottomNav.init();
+        }
+
+        /* ========== 导出 Excel(多 sheet: 汇总 / 明细 / 分类排行)========== */
+        // 拉全量交易(分页循环,绕开 listTransactions 单次 100 条上限)
+        const fetchAllTransactions = async () => {
+            const PAGE = 100;
+            const all  = [];
+            let offset = 0;
+            while (true) {
+                const data  = await MockData.listTransactions({ limit: PAGE, offset });
+                const items = (data && data.items) || [];
+                all.push(...items);
+                if (!data || !data.hasMore || items.length === 0) break;
+                offset += PAGE;
+            }
+            return all;
+        };
+
+        const exportToExcel = async () => {
+            if (typeof XLSX === 'undefined') {
+                alert('SheetJS 加载失败,请检查网络后重试');
+                return;
+            }
+            try {
+                // 1) 全量数据 + 汇总 + 分类
+                const allItems    = await fetchAllTransactions();
+                const summaryResp = await Auth.apiFetch('/stats/summary?range=month');
+                const summary     = (summaryResp && summaryResp.data) || {};
+                await MockData.loadCategories();
+                const catMap = {};
+                MockData.allCategories.forEach((c) => { catMap[c.id] = c; });
+
+                // 2) Sheet 1: 汇总
+                const sumSheet = XLSX.utils.aoa_to_sheet([
+                    ['Petal Ledger 收支汇总'],
+                    [],
+                    ['统计月份', Utils.currentMonth()],
+                    ['总支出',   Number(summary.totalExpense || 0)],
+                    ['总收入',   Number(summary.totalIncome  || 0)],
+                    ['结余',     Number(summary.balance      || 0)],
+                    ['记录数',   allItems.length],
+                ]);
+                sumSheet['!cols'] = [{ wch: 14 }, { wch: 18 }];
+
+                // 3) Sheet 2: 明细(按日期升序)
+                const sorted = allItems.slice().sort((a, b) =>
+                    String(a.transactionDate || '').localeCompare(String(b.transactionDate || ''))
+                );
+                const detailRows = [
+                    ['日期', '类型', '分类', '金额', '备注'],
+                    ...sorted.map((t) => {
+                        const cat = catMap[t.categoryId];
+                        return [
+                            t.transactionDate,
+                            t.type === 'expense' ? '支出' : '收入',
+                            cat ? `${cat.icon || ''} ${cat.name}` : '-',
+                            Number(t.amount),
+                            t.note || '',
+                        ];
+                    }),
+                ];
+                const detailSheet = XLSX.utils.aoa_to_sheet(detailRows);
+                detailSheet['!cols'] = [{ wch: 12 }, { wch: 8 }, { wch: 20 }, { wch: 12 }, { wch: 30 }];
+
+                // 4) Sheet 3 & 4: 分类排行(支出 / 收入)
+                const buildCatRows = (rows) => [
+                    ['分类', '金额', '占比%'],
+                    ...(rows || []).map((r) => [
+                        `${r.icon || ''} ${r.name}`,
+                        Number(r.amount),
+                        r.percent,
+                    ]),
+                ];
+                const expSheet = XLSX.utils.aoa_to_sheet(buildCatRows(summary.byCategory));
+                expSheet['!cols'] = [{ wch: 20 }, { wch: 12 }, { wch: 8 }];
+                const incSheet = XLSX.utils.aoa_to_sheet(buildCatRows(summary.byCategoryIncome));
+                incSheet['!cols'] = [{ wch: 20 }, { wch: 12 }, { wch: 8 }];
+
+                // 5) 拼 workbook + 触发下载
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, sumSheet,   '汇总');
+                XLSX.utils.book_append_sheet(wb, detailSheet, '明细');
+                XLSX.utils.book_append_sheet(wb, expSheet,   '支出排行');
+                XLSX.utils.book_append_sheet(wb, incSheet,   '收入排行');
+
+                const fname = `PetalLedger_${Utils.currentMonth()}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+                XLSX.writeFile(wb, fname);
+            } catch (err) {
+                console.error('[export] 导出失败:', err);
+                alert('导出失败:' + (err.message || '未知错误'));
+            }
+        };
+
+        /* ========== 清空记录(走 API,本地缓存同步)========== */
+        const clearAllRecords = async () => {
+            if (!confirm('确定要清空所有记账数据吗?此操作不可恢复!')) return;
+            if (!confirm('再次确认:所有收入和支出记录将被永久删除。继续?')) return;
+            try {
+                const result = await MockData.clearAllTransactions();
+                alert(`已清空 ${result.removed || 0} 条记录`);
+            } catch (err) {
+                console.error('[clear] 清空失败:', err);
+                alert('清空失败:' + (err.message || '未知错误'));
+            }
+        };
+
+        // 路由守卫：未登录则跳转 login.html
+        if (!Auth.requireAuth()) {} else { init(); }
+
+        document.querySelectorAll('.settings-row').forEach((row) => {
+            row.addEventListener('click', () => {
+                if (row.dataset.action === 'currency') {
+                    openCurrencyModal();
+                    return;
+                }
+                if (row.dataset.action === 'theme') {
+                    openThemeModal();
+                    return;
+                }
+                if (row.dataset.action === 'export') {
+                    exportToExcel();
+                    return;
+                }
+                if (row.dataset.action === 'clear') {
+                    clearAllRecords();
+                    return;
+                }
+            });
+        });
+
+        document.getElementById('logout-btn').addEventListener('click', async () => {
+            if (confirm('确定要退出登录吗？')) {
+                await Auth.logout();
+                window.location.href = 'login.html';
+            }
+        });
+    </script>
+</body>
+</html>

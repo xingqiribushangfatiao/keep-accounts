@@ -119,6 +119,32 @@ const MockData = (() => {
     }
 
     /* ===========================================================
+     * 交易(分页版):给 list 页无限滚动用
+     *   - type / createdMonth / categoryId 都是可选筛选项
+     *   - limit 默认 20,offset 默认 0
+     *   - 后端返回 {items, total, limit, offset, hasMore}
+     * =========================================================== */
+    async function listTransactions({ type, createdMonth, categoryId, limit = 20, offset = 0 } = {}) {
+        const qs = new URLSearchParams();
+        if (type)         qs.set('type', type);
+        if (createdMonth) qs.set('createdMonth', createdMonth);
+        if (categoryId)   qs.set('categoryId', String(categoryId));
+        qs.set('limit',  String(limit));
+        qs.set('offset', String(offset));
+        const data = await _get(`/transactions?${qs.toString()}`);
+        return (data && data.data) || { items: [], total: 0, limit, offset, hasMore: false };
+    }
+
+    /* ===========================================================
+     * 有数据的 created_at 月份(YYYY-MM 倒序)
+     * list 页"月份选择器"用
+     * =========================================================== */
+    async function getAvailableMonths() {
+        const data = await _get('/transactions/available-months');
+        return (data && data.data) || [];
+    }
+
+    /* ===========================================================
      * 汇总:本月 + 今日
      * =========================================================== */
     async function loadSummary() {
@@ -196,6 +222,17 @@ const MockData = (() => {
         return true;
     }
 
+    /**
+     * 清空当前用户(默认账本)的所有交易记录
+     * 给"设置 → 清空记录"用
+     * @returns {{ removed: number }} 被删除的条数
+     */
+    async function clearAllTransactions() {
+        const data = await _del('/transactions');
+        await Promise.all([loadTransactions(), loadSummary()]);
+        return (data && data.data) || { removed: 0 };
+    }
+
     async function refresh() {
         _loaded = false;
         return init({ force: true });
@@ -207,8 +244,9 @@ const MockData = (() => {
     return {
         /* async API */
         init, refresh,
-        addTransaction, deleteTransaction,
+        addTransaction, deleteTransaction, clearAllTransactions,
         ensureBook, loadTransactions, loadCategories, loadSummary,
+        listTransactions, getAvailableMonths,
 
         /* 同步只读(依赖 init 已完成) */
         get transactions()      { return _transactions; },

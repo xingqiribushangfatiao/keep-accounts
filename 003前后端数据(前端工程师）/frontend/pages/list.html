@@ -27,6 +27,7 @@
                         'on-primary': 'var(--on-primary)',
                         'on-surface': 'var(--on-surface)',
                         'text-muted': 'var(--text-muted)',
+                        'text-disabled': 'var(--text-disabled)',
                         'border-blush': 'var(--border-blush)',
                         'expense-red': 'var(--expense-red)',
                         'income-teal': 'var(--income-teal)',
@@ -38,6 +39,7 @@
         };
     </script>
     <style>
+        /* 左滑删除(沿用旧版交互) */
         .swipe-row { position: relative; overflow: hidden; border-radius: var(--radius-xl); }
         .swipe-content {
             transition: transform 0.25s ease;
@@ -57,6 +59,96 @@
             font-weight: 600;
             border-radius: var(--radius-xl);
         }
+
+        /* popover 通用样式(以原 button 为基准向下弹出) */
+        .popover {
+            position: absolute;
+            top: calc(100% + 8px);
+            z-index: 50;
+            background: var(--surface-white);
+            border: 1px solid var(--border-blush);
+            border-radius: 16px;
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.10);
+            padding: 12px;
+        }
+        .popover-left  { left: 0;  min-width: 252px; }
+        .popover-right { right: 0; min-width: 240px; max-width: 280px; max-height: 420px; overflow-y: auto; }
+
+        /* 月份单元格 */
+        .month-cell {
+            padding: 9px 0;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--on-surface);
+            background: var(--surface);
+            transition: background 0.15s, color 0.15s;
+        }
+        .month-cell:hover { background: color-mix(in srgb, var(--primary) 12%, var(--surface-white)); }
+        .month-cell.selected {
+            background: var(--primary-gradient);
+            color: var(--on-primary);
+            font-weight: 600;
+        }
+        /* 有数据的月份:右下角加个浅色小圆点,纯视觉提示,不影响点击 */
+        .month-cell.has-data {
+            position: relative;
+        }
+        .month-cell.has-data::after {
+            content: '';
+            position: absolute;
+            right: 8px; bottom: 6px;
+            width: 5px; height: 5px;
+            border-radius: 50%;
+            background: var(--income-teal);
+        }
+        .month-cell.selected.has-data::after { background: var(--on-primary); }
+
+        /* 分类选项 */
+        .type-option {
+            display: flex; align-items: center; gap: 10px;
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 10px;
+            font-size: 13px;
+            color: var(--on-surface);
+            text-align: left;
+            transition: background 0.15s;
+        }
+        .type-option:hover { background: var(--surface); }
+        .type-option.selected { background: color-mix(in srgb, var(--primary) 14%, var(--surface-white)); font-weight: 600; }
+        .cat-icon {
+            width: 22px; height: 22px;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 16px;
+        }
+
+        /* 右键菜单(桌面端)—— 鼠标位置弹出,点空白 / ESC 关闭 */
+        .row-context-menu {
+            position: fixed;
+            z-index: 100;
+            background: var(--surface-white);
+            border: 1px solid var(--border-blush);
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            padding: 6px;
+            min-width: 120px;
+        }
+        .row-context-menu button {
+            display: flex; align-items: center; gap: 8px;
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: var(--expense-red);
+            font-weight: 500;
+            text-align: left;
+            transition: background 0.15s;
+        }
+        .row-context-menu button:hover {
+            background: color-mix(in srgb, var(--expense-red) 10%, var(--surface-white));
+        }
+        .row-context-menu .material-symbols-outlined { font-size: 18px; }
     </style>
 </head>
 <body class="bg-bg-soft-pink min-h-screen text-on-surface font-body pb-24">
@@ -68,22 +160,66 @@
             <h1 class="font-display text-[22px] font-bold text-center">收支明细</h1>
         </header>
 
-        <!-- 月份 + 类型 选择器 -->
+        <!-- 月份 + 类型 选择器(popper 形式,以原 button 为基准向下弹出) -->
         <div class="px-5 flex items-center justify-between mb-3">
-            <button id="btn-month" class="flex items-center gap-1 px-3.5 py-1.5 rounded-full bg-surface-white border border-border-blush text-[13px] text-on-surface font-medium">
-                <span id="current-month">2026年8月</span>
-                <span class="material-symbols-outlined text-[16px] text-text-muted">expand_more</span>
-            </button>
-            <button id="btn-type" class="flex items-center gap-1 px-3.5 py-1.5 rounded-full bg-surface-white border border-border-blush text-[13px] text-on-surface font-medium">
-                <span>全部类型</span>
-                <span class="material-symbols-outlined text-[16px] text-text-muted">expand_more</span>
-            </button>
+
+            <!-- 月份 -->
+            <div class="relative">
+                <button id="btn-month"
+                        class="flex items-center gap-1 px-3.5 py-1.5 rounded-full bg-surface-white border border-border-blush text-[13px] text-on-surface font-medium">
+                    <span id="current-month">2026年8月</span>
+                    <span class="material-symbols-outlined text-[16px] text-text-muted">expand_more</span>
+                </button>
+                <div id="month-popover" class="popover popover-left hidden">
+                    <div class="flex items-center justify-between mb-3">
+                        <button id="prev-year" type="button"
+                                class="w-7 h-7 rounded-full flex items-center justify-center text-text-muted hover:bg-surface">
+                            <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+                        </button>
+                        <h4 id="popover-year" class="font-display font-bold text-[14px]">2026年</h4>
+                        <button id="next-year" type="button"
+                                class="w-7 h-7 rounded-full flex items-center justify-center text-text-muted hover:bg-surface">
+                            <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2" id="month-grid">
+                        <!-- JS 动态渲染 12 个月 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 类型 -->
+            <div class="relative">
+                <button id="btn-type"
+                        class="flex items-center gap-1 px-3.5 py-1.5 rounded-full bg-surface-white border border-border-blush text-[13px] text-on-surface font-medium">
+                    <span id="current-type-label">全部类型</span>
+                    <span class="material-symbols-outlined text-[16px] text-text-muted">expand_more</span>
+                </button>
+                <div id="type-popover" class="popover popover-right hidden">
+                    <button type="button" class="type-option" data-cat-id="">
+                        <span class="cat-icon">📋</span>
+                        <span>全部</span>
+                    </button>
+                    <div class="border-t border-border-blush my-1.5"></div>
+                    <p class="text-[11px] text-text-muted px-2.5 mb-1 mt-1">支出</p>
+                    <div id="type-popover-expense">
+                        <!-- JS 动态渲染 -->
+                    </div>
+                    <p class="text-[11px] text-text-muted px-2.5 mb-1 mt-2">收入</p>
+                    <div id="type-popover-income">
+                        <!-- JS 动态渲染 -->
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <!-- 记录列表（按日期分组） -->
+        <!-- 记录列表(按 createdAt 日期分组) -->
         <div id="list-container" class="px-5 space-y-5">
             <!-- JS 动态渲染 -->
         </div>
+
+        <!-- 无限滚动哨兵 -->
+        <div id="sentinel" class="px-5 py-4 text-center text-text-muted text-[12px]">加载中...</div>
     </main>
 
     <!-- 底部导航 -->
@@ -95,88 +231,299 @@
     <script src="../shared/js/nav.js"></script>
 
     <script>
-        /* ========== 筛选状态 ========== */
-        let filterMonth = (() => {
-            const n = new Date();
-            return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}`;
-        })();
-        let filterType = 'all';   // 'all' | 'expense' | 'income'
+        /* ============================================================
+         * 状态
+         *   filterMonth:    string 'YYYY-MM' 或 ''
+         *   filterCategory: number(分类 id) 或 null(=全部)
+         *   _items:         已加载的所有交易(append-only)
+         *   _hasMore:       后端是否还有下一页
+         *   _loading:       是否正在加载下一页(避免 IntersectionObserver 重入)
+         *   _availableMonths: ['2026-08', '2026-07', ...] 后端给的有数据的月份
+         *   _popoverYear:   月份 popover 当前显示的年份
+         * ============================================================ */
+        const pad2 = (n) => String(n).padStart(2, '0');
+        const MONTH_NAMES = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+        const PAGE_SIZE = 20;
+
+        let filterMonth    = '';
+        let filterCategory = null;
+        let _items         = [];
+        let _hasMore       = true;
+        let _loading       = false;
+        let _availableMonths = [];
+        let _popoverYear   = 0;
+        let _sentinelObserver = null;
+        let _rowContextMenuEl   = null;  // 当前打开的右键菜单 DOM
+        let _rowContextTargetId = null;  // 右键目标记录的 id
 
         if (!Auth.requireAuth()) {} else { init(); }
 
         async function init() {
             try {
-                await MockData.init();
+                // 只拉 categories(给类型 popover) + available-months(给月份 popover),
+                // 不再全量加载 transactions,改走 listTransactions 分页
+                const [_, months] = await Promise.all([
+                    MockData.loadCategories(),
+                    MockData.getAvailableMonths(),
+                ]);
+                _availableMonths = months || [];
             } catch (err) {
                 console.error('[list] 数据加载失败:', err);
             }
+
+            // 默认月份 = 当前月;若当前月没数据,回退到最近一个有数据的月
+            const now = new Date();
+            const thisMonth = `${now.getFullYear()}-${pad2(now.getMonth() + 1)}`;
+            filterMonth = _availableMonths.includes(thisMonth)
+                ? thisMonth
+                : (_availableMonths[0] || thisMonth);
+            _popoverYear = parseInt(filterMonth.split('-')[0], 10) || now.getFullYear();
+
             bindFilters();
-            renderList();
+            renderMonthPopover();
+            renderTypePopover();
+            updateMonthLabel();
+            updateTypeLabel();
+
+            await reloadList();
+            setupInfiniteScroll();
+            setupPopoverDismissal();
+            setupContextMenuDismissal();
+
             BottomNav.init();
         }
 
+        /* ========== 筛选器按钮 + popover 打开/关闭 ========== */
         function bindFilters() {
-            // 月份按钮:循环切换 (本月 → 上月 → 上上月 → ... → 本月)
-            document.getElementById('btn-month').addEventListener('click', () => {
-                const [y, m] = filterMonth.split('-').map(Number);
-                let ny = y, nm = m - 1;
-                if (nm < 1) { ny--; nm = 12; }
-                // 不能早于数据起始月(本 MVP 不限,允许 2000 之前的)
-                if (ny < 2000) return;
-                filterMonth = `${ny}-${String(nm).padStart(2, '0')}`;
-                updateMonthLabel();
-                renderList();
+            document.getElementById('btn-month').addEventListener('click', (e) => {
+                e.stopPropagation();
+                const wasOpen = !document.getElementById('month-popover').classList.contains('hidden');
+                closeAllPopovers();
+                if (!wasOpen) {
+                    // 打开时把 popover 年份对齐到当前选中月所在年
+                    _popoverYear = parseInt(filterMonth.split('-')[0], 10) || new Date().getFullYear();
+                    document.getElementById('popover-year').textContent = `${_popoverYear}年`;
+                    renderMonthPopover();
+                    document.getElementById('month-popover').classList.remove('hidden');
+                }
             });
-            // 类型按钮:循环切换 全部 → 支出 → 收入 → 全部
-            document.getElementById('btn-type').addEventListener('click', () => {
-                const order = ['all', 'expense', 'income'];
-                const idx = order.indexOf(filterType);
-                filterType = order[(idx + 1) % order.length];
-                document.querySelector('#btn-type > span:first-child').textContent =
-                    filterType === 'all'      ? '全部类型' :
-                    filterType === 'expense' ? '仅支出'   : '仅收入';
-                renderList();
+
+            document.getElementById('btn-type').addEventListener('click', (e) => {
+                e.stopPropagation();
+                const wasOpen = !document.getElementById('type-popover').classList.contains('hidden');
+                closeAllPopovers();
+                if (!wasOpen) {
+                    // 高亮当前已选项
+                    syncTypeSelectedStyle();
+                    document.getElementById('type-popover').classList.remove('hidden');
+                }
             });
-            updateMonthLabel();
+
+            document.getElementById('prev-year').addEventListener('click', (e) => {
+                e.stopPropagation();
+                _popoverYear--;
+                document.getElementById('popover-year').textContent = `${_popoverYear}年`;
+                renderMonthPopover();
+            });
+            document.getElementById('next-year').addEventListener('click', (e) => {
+                e.stopPropagation();
+                _popoverYear++;
+                document.getElementById('popover-year').textContent = `${_popoverYear}年`;
+                renderMonthPopover();
+            });
+        }
+
+        function closeAllPopovers() {
+            document.getElementById('month-popover').classList.add('hidden');
+            document.getElementById('type-popover').classList.add('hidden');
+        }
+
+        function setupPopoverDismissal() {
+            // 点击 popover/按钮 之外的地方,自动收起
+            document.addEventListener('click', (e) => {
+                if (e.target.closest('#month-popover') ||
+                    e.target.closest('#type-popover') ||
+                    e.target.closest('#btn-month')   ||
+                    e.target.closest('#btn-type')) {
+                    return;
+                }
+                closeAllPopovers();
+            });
         }
 
         function updateMonthLabel() {
+            if (!filterMonth) return;
             const [y, m] = filterMonth.split('-').map(Number);
             document.getElementById('current-month').textContent = `${y}年${m}月`;
         }
 
-        /* ========== 列表渲染 ========== */
+        function updateTypeLabel() {
+            const label = document.getElementById('current-type-label');
+            if (filterCategory == null) {
+                label.textContent = '全部类型';
+                return;
+            }
+            const all = [
+                ...(MockData.expenseCategories || []),
+                ...(MockData.incomeCategories  || []),
+            ];
+            const cat = all.find((c) => c.id === filterCategory);
+            label.textContent = cat ? cat.name : '全部类型';
+        }
+
+        function syncTypeSelectedStyle() {
+            document.querySelectorAll('#type-popover .type-option').forEach((btn) => {
+                const id = btn.dataset.catId ? parseInt(btn.dataset.catId, 10) : null;
+                btn.classList.toggle('selected', id === filterCategory);
+            });
+        }
+
+        /* ========== 月份 popover(类似日历) ==========
+         * 所有月份都能点;有数据的月份加 .has-data 做视觉提示(右下角小圆点),
+         * 但不阻止切换 —— 选到空月由列表 empty state 兜底
+         */
+        function renderMonthPopover() {
+            const grid = document.getElementById('month-grid');
+            grid.innerHTML = MONTH_NAMES.map((name, i) => {
+                const m = i + 1;
+                const key = `${_popoverYear}-${pad2(m)}`;
+                const selected = filterMonth === key;
+                const hasData  = _availableMonths.includes(key);
+                const cls = ['month-cell'];
+                if (selected) cls.push('selected');
+                if (hasData)  cls.push('has-data');
+                return `<button type="button" class="${cls.join(' ')}" data-month="${m}">${name}</button>`;
+            }).join('');
+
+            grid.querySelectorAll('.month-cell').forEach((btn) => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const m = parseInt(btn.dataset.month, 10);
+                    filterMonth = `${_popoverYear}-${pad2(m)}`;
+                    updateMonthLabel();
+                    closeAllPopovers();
+                    reloadList();
+                });
+            });
+        }
+
+        /* ========== 类型 popover(全部 + 支出分类 + 收入分类) ========== */
+        function renderTypePopover() {
+            const expCats = MockData.expenseCategories || [];
+            const incCats = MockData.incomeCategories  || [];
+
+            const renderCat = (c) => `<button type="button" class="type-option" data-cat-id="${c.id}">
+                <span class="cat-icon">${c.icon || '📦'}</span>
+                <span>${Utils.escapeHtml(c.name)}</span>
+            </button>`;
+
+            document.getElementById('type-popover-expense').innerHTML = expCats.length
+                ? expCats.map(renderCat).join('')
+                : '<div class="text-text-muted text-[11px] text-center py-2">暂无支出分类</div>';
+
+            document.getElementById('type-popover-income').innerHTML = incCats.length
+                ? incCats.map(renderCat).join('')
+                : '<div class="text-text-muted text-[11px] text-center py-2">暂无收入分类</div>';
+
+            document.querySelectorAll('#type-popover .type-option').forEach((btn) => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const raw = btn.dataset.catId;
+                    filterCategory = raw ? parseInt(raw, 10) : null;
+                    updateTypeLabel();
+                    closeAllPopovers();
+                    reloadList();
+                });
+            });
+
+            syncTypeSelectedStyle();
+        }
+
+        /* ========== 列表数据(无限滚动) ========== */
+        const createdDateKey = (createdAt) => {
+            const d = (createdAt instanceof Date) ? createdAt : new Date(createdAt);
+            return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+        };
+
+        async function reloadList() {
+            _items   = [];
+            _hasMore = true;
+            document.getElementById('list-container').innerHTML = '';
+            document.getElementById('sentinel').textContent = '加载中...';
+            // 重置 sentinel 可见性:重新 observe 让 IntersectionObserver 重新检测
+            if (_sentinelObserver) _sentinelObserver.disconnect();
+            await loadNextPage();
+            setupInfiniteScroll();
+        }
+
+        async function loadNextPage() {
+            if (_loading || !_hasMore) return;
+            _loading = true;
+            const offset = _items.length;
+            try {
+                const result = await MockData.listTransactions({
+                    createdMonth: filterMonth,
+                    categoryId:   filterCategory,
+                    limit:  PAGE_SIZE,
+                    offset,
+                });
+                const newItems = (result.items || []).map((t) => ({
+                    id:         t.id,
+                    type:       t.type,
+                    amount:     Number(t.amount),
+                    categoryId: t.categoryId,
+                    date:       t.transactionDate,
+                    note:       t.note || '',
+                    createdAt:  t.createdAt ? new Date(t.createdAt).getTime() : Date.now(),
+                }));
+                _items   = _items.concat(newItems);
+                _hasMore = !!result.hasMore;
+            } catch (err) {
+                console.error('[list] 加载失败:', err);
+                _hasMore = false;
+            } finally {
+                _loading = false;
+            }
+            renderList();
+            document.getElementById('sentinel').textContent = _hasMore
+                ? '上滑 / 下滑加载更多'
+                : (_items.length ? '已显示全部' : '');
+        }
+
+        function setupInfiniteScroll() {
+            const sentinel = document.getElementById('sentinel');
+            if (_sentinelObserver) _sentinelObserver.disconnect();
+            _sentinelObserver = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting && _hasMore && !_loading) {
+                    loadNextPage();
+                }
+            }, { rootMargin: '120px 0px' });
+            _sentinelObserver.observe(sentinel);
+        }
+
+        /* ========== 渲染(按 createdAt 日期分组) ========== */
         function renderList() {
-            // 按月 + 按类型过滤(纯前端过滤,缓存里已有最近 500 条)
-            const filtered = MockData.transactions.filter((t) => {
-                const monthOk = t.date.startsWith(filterMonth);
-                const typeOk  = filterType === 'all' || t.type === filterType;
-                return monthOk && typeOk;
-            });
-
-            // 按日期分组
-            const groups = {};
-            filtered.forEach((t) => {
-                if (!groups[t.date]) groups[t.date] = [];
-                groups[t.date].push(t);
-            });
-            const dates = Object.keys(groups).sort((a, b) => b.localeCompare(a));
-
             const container = document.getElementById('list-container');
-            if (!dates.length) {
-                container.innerHTML = `
-                <div class="bg-surface-white rounded-2xl p-8 text-center text-text-muted text-[13px] border border-border-blush">
-                    本月暂无记录
-                </div>`;
+            if (!_items.length) {
+                container.innerHTML = `<div class="bg-surface-white rounded-2xl p-8 text-center text-text-muted text-[13px] border border-border-blush">本周期暂无记录</div>`;
                 return;
             }
 
-            container.innerHTML = dates.map((date) => {
-                const items = groups[date].sort((a, b) => b.createdAt - a.createdAt);
+            // 按 createdAt 日期分组
+            const groups = new Map();
+            _items.forEach((item) => {
+                const key = createdDateKey(item.createdAt);
+                if (!groups.has(key)) groups.set(key, []);
+                groups.get(key).push(item);
+            });
+
+            const sortedKeys = Array.from(groups.keys()).sort((a, b) => b.localeCompare(a));
+
+            container.innerHTML = sortedKeys.map((key) => {
+                const items = groups.get(key).sort((a, b) => b.createdAt - a.createdAt);
                 const dayExp = items.filter((i) => i.type === 'expense').reduce((s, i) => s + i.amount, 0);
                 const dayInc = items.filter((i) => i.type === 'income').reduce((s, i) => s + i.amount, 0);
-                const rel = Utils.relativeDate(date);
-                const dateLabel = `${rel} ${Utils.formatDate(date)}`;
+                const dateLabel = Utils.formatDateLong(key);
                 return `
                 <section>
                     <div class="flex justify-between items-center mb-2 px-1">
@@ -194,6 +541,7 @@
             }).join('');
 
             bindSwipe();
+            bindContextMenu();
         }
 
         function renderRow(r) {
@@ -201,7 +549,6 @@
             const isIncome = r.type === 'income';
             const sign = isIncome ? '+' : '-';
             const amountColor = isIncome ? 'text-income-teal' : 'text-expense-red';
-            const time = Utils.formatTime(r.createdAt);
             return `
             <div class="swipe-row" data-id="${r.id}">
                 <div class="swipe-content p-3.5 flex items-center gap-3">
@@ -212,7 +559,6 @@
                     </div>
                     <div class="text-right shrink-0">
                         <p class="font-display text-[15px] font-bold ${amountColor}">${sign}${Utils.formatCurrency(r.amount, false)}</p>
-                        <p class="text-[11px] text-text-muted mt-0.5">${time}</p>
                     </div>
                 </div>
                 <div class="swipe-action">
@@ -229,7 +575,7 @@
             const rows = document.querySelectorAll('.swipe-row');
             rows.forEach((row) => {
                 const content = row.querySelector('.swipe-content');
-                const action = row.querySelector('.swipe-action');
+                const action  = row.querySelector('.swipe-action');
                 let startX = 0, currentX = 0, dragging = false;
 
                 const onStart = (e) => {
@@ -254,19 +600,95 @@
                 };
 
                 content.addEventListener('touchstart', onStart, { passive: true });
-                content.addEventListener('touchmove', onMove, { passive: true });
-                content.addEventListener('touchend', onEnd);
+                content.addEventListener('touchmove',  onMove,  { passive: true });
+                content.addEventListener('touchend',   onEnd);
 
                 action.addEventListener('click', async () => {
                     const id = parseInt(row.dataset.id, 10);
                     if (!confirm('确定删除这条记录吗?')) return;
                     try {
                         await MockData.deleteTransaction(id);
-                        renderList();
+                        await reloadList();
                     } catch (err) {
                         alert('删除失败:' + (err.message || '未知错误'));
                     }
                 });
+            });
+        }
+
+        /* ========== 右键菜单(桌面端)==========
+         * 行上右键 → 鼠标位置弹一个"删除"小菜单 → 调 deleteTransaction + reloadList
+         * 点击 / 右键别处 / ESC 自动关闭
+         */
+        function bindContextMenu() {
+            document.querySelectorAll('.swipe-row').forEach((row) => {
+                const content = row.querySelector('.swipe-content');
+                content.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();  // 阻止冒泡到 document 上的关闭监听
+                    const id = parseInt(row.dataset.id, 10);
+                    if (id) showRowContextMenu(e.clientX, e.clientY, id);
+                });
+            });
+        }
+
+        function showRowContextMenu(x, y, rowId) {
+            closeRowContextMenu();  // 先关掉旧的
+            const el = document.createElement('div');
+            el.className = 'row-context-menu';
+            el.id = 'row-context-menu';
+            el.innerHTML = `
+                <button type="button" data-action="delete">
+                    <span class="material-symbols-outlined">delete</span>
+                    <span>删除</span>
+                </button>
+            `;
+            document.body.appendChild(el);
+            // 定位:超出视口右下角时回拉
+            const rect = el.getBoundingClientRect();
+            el.style.left = Math.max(8, Math.min(x, window.innerWidth  - rect.width  - 8)) + 'px';
+            el.style.top  = Math.max(8, Math.min(y, window.innerHeight - rect.height - 8)) + 'px';
+            _rowContextMenuEl   = el;
+            _rowContextTargetId = rowId;
+
+            el.querySelector('[data-action="delete"]').addEventListener('click', async (e) => {
+                e.stopPropagation();  // 阻止触发 document 的 click 关闭逻辑
+                const id = _rowContextTargetId;
+                closeRowContextMenu();
+                if (!confirm('确定删除这条记录吗?')) return;
+                try {
+                    await MockData.deleteTransaction(id);
+                    await reloadList();
+                } catch (err) {
+                    alert('删除失败:' + (err.message || '未知错误'));
+                }
+            });
+        }
+
+        function closeRowContextMenu() {
+            if (_rowContextMenuEl) {
+                _rowContextMenuEl.remove();
+                _rowContextMenuEl   = null;
+                _rowContextTargetId = null;
+            }
+        }
+
+        function setupContextMenuDismissal() {
+            // 1) 空白处左键 → 关
+            document.addEventListener('click', (e) => {
+                if (_rowContextMenuEl && !e.target.closest('#row-context-menu')) {
+                    closeRowContextMenu();
+                }
+            });
+            // 2) 别的位置右键 → 关(行的 contextmenu 会重新打开新的)
+            document.addEventListener('contextmenu', (e) => {
+                if (_rowContextMenuEl && !e.target.closest('#row-context-menu')) {
+                    closeRowContextMenu();
+                }
+            });
+            // 3) ESC → 关
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closeRowContextMenu();
             });
         }
     </script>
