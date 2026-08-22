@@ -1,0 +1,3 @@
+docker destop 要先把容器打开
+
+npm start   Node.js/npm 的项目启动命令
